@@ -60,7 +60,6 @@ static t_class *delayfbck_tilde_class;
  */
 t_int *delayfbck_tilde_perform(t_int *w)
 {
-post("debug4");
   /* the first element is a pointer to the dataspace of this object */
   t_delayfbck_tilde *x = (t_delayfbck_tilde *)(w[1]);
   /* here is a pointer to the t_sample arrays that hold the 2 input signals */
@@ -74,13 +73,17 @@ post("debug4");
   /* just a counter */
   int i;
 
+  t_float inLoc, outLoc;
+
   /* this is the main routine: 
    * mix the 2 input signals into the output signal
    */
   for(i=0; i<n; i++)
     {
       //out[i]=in1[i]*(1-f_delayfbck);
-      filter_step(&x->filt, in1[i], &out[i]);
+      inLoc = in1[i];
+      filter_step(&x->filt, inLoc, &outLoc);
+      out[i] = outLoc;
     }
 
   /* return a pointer to the dataspace for the next dsp-object */
@@ -95,7 +98,6 @@ post("debug4");
  */
 void delayfbck_tilde_dsp(t_delayfbck_tilde *x, t_signal **sp)
 {
-post("debug3");
   /* add delayfbck_tilde_perform() to the DSP-tree;
    * the delayfbck_tilde_perform() will expect "4" arguments (packed into an
    * t_int-array), which are:
@@ -129,7 +131,6 @@ void delayfbck_tilde_free(t_delayfbck_tilde *x)
  */
 void *delayfbck_tilde_new(t_floatarg f)
 {
-post("debug1");
   t_delayfbck_tilde *x = (t_delayfbck_tilde *)pd_new(delayfbck_tilde_class);
 
   /* save the mixing factor in our dataspace */
@@ -147,11 +148,12 @@ post("debug1");
   // Create a 2nd order low-pass filter
   filter_init(&x->filt, 2);
   
-  // numerator
-  x->filt.b[0] = 0.0;
-  x->filt.b[1] = 2.53692622e-10;
-  x->filt.b[2] = 2.50340970e-10; 
+  // numerator 1.        , -1.98802657,  0.98882251
+  x->filt.b[0] = 1.0;
+  x->filt.b[1] = -1.98802657;
+  x->filt.b[2] = 0.98882251; 
   // denominator, leading coeff assumed to be 1
+  // 1.        , -1.96009608,  0.96089202
   x->filt.a[0] = -1.96009608;
   x->filt.a[1] =  0.96089202;
 
@@ -166,7 +168,6 @@ post("debug1");
  */
 void delayfbck_tilde_setup(void) {
 
-post("debug2");
   delayfbck_tilde_class = class_new(gensym("delayfbck~"),
         (t_newmethod)delayfbck_tilde_new,
         (t_method)delayfbck_tilde_free,

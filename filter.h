@@ -5,9 +5,9 @@
 
 typedef struct _filter {
     t_int order, n;
-    t_float* b;		// nuemrator (b coeffs) , size order+1
-    t_float* a;		// denomintaor (a coeffs), size order
-    t_float* v; 	// state, size order+1
+    double* b;		// nuemrator (b coeffs) , size order+1
+    double* a;		// denomintaor (a coeffs), size order
+    double* v; 	// state, size order+1
 } t_filter;
 
 
