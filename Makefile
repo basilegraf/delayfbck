@@ -5,6 +5,8 @@
 # library name
 lib.name = externals.my_externals.delayfbck
 
+common.sources = filter.c
+
 # input source file (class name == source file basename)
 class.sources = delayfbck~.c
 
