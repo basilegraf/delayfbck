@@ -31,6 +31,8 @@ void filter_hp2(t_filter* filt, t_float f, t_float z, t_float h);
 void filter_lp1(t_filter* filt, t_float f, t_float h);
 // 1st order highpass with cutoff freq f and sample time h
 void filter_hp1(t_filter* filt, t_float f, t_float h);
+// Notch filter with frequency f, gain g, bandwidth b and sample time h
+void filter_n(t_filter* filt, t_float f, t_float g, t_float b, t_float h);
 
 
 #endif /* _FILTER_H_ */

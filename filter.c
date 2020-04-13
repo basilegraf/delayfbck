@@ -1,6 +1,7 @@
 #include "filter.h"
 #include <stdio.h>      /* printf, scanf, NULL */
 #include <stdlib.h>     /* calloc, exit, free */
+#include <math.h>
 
 
 
@@ -14,6 +15,11 @@
 
 void filter_init(t_filter* filt, t_int order)
 {
+    if (order > MAX_FILTER_ORDER)
+    {
+        error("filter: given order was %d max order is %d",(int) order,(int) MAX_FILTER_ORDER);
+        order = MAX_FILTER_ORDER;
+    }
     filt->order = order;
     filt->n = 0;
     for (int k=0; k<MAX_FILTER_ORDER; k++)
@@ -120,4 +126,25 @@ void filter_hp1(t_filter* filt, t_float f, t_float h)
     filt->a[0] = a0i * (-2.0 + hw);
 }
 
+
+// Notch filter with frequency f, gain g, bandwidth b and sample time h
+void filter_n(t_filter* filt, t_float f, t_float g, t_float bHz, t_float h)
+{
+    filt->order = 2;
+    t_float w = 2.0 * PI * f;
+    t_float b = 2.0 * PI * bHz;
+    t_float hw = h * w;
+    t_float hw2 = hw * hw;
+    t_float bh = b * h;
+    t_float sqg = sqrt(g);
+	
+    t_float a0i = 1.0 / (2.0*bh + sqg*(4+hw2));
+
+    filt->b[0] = a0i * sqg * (4.0 + 2.0*b*sqg*h + hw2);
+    filt->b[1] = a0i * 2.0 * sqg *(-4.0 + hw2);
+    filt->b[2] = a0i * sqg * (4.0 - 2.0*b*sqg*h + hw2);
+
+    filt->a[0] = a0i * (2.0*sqg*(-4.0 + hw2));
+    filt->a[1] = a0i * ((-2.0*bh + sqg*(4 + hw2)));
+}
 
