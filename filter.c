@@ -1,3 +1,9 @@
+/* 
+Direct Form II filters with design of common filers (low/high-pas, notch)
+basile dot graf at a3 dot epfl dot ch
+*/
+
+
 #include "filter.h"
 #include <stdio.h>     
 #include <stdlib.h>     

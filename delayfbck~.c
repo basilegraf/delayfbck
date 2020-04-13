@@ -19,6 +19,7 @@
 
 #include "filter.h"
 #include "delay.h"
+#include "nonlin.h"
 
 /**
  * define a new "class" 
@@ -38,7 +39,9 @@ static t_class *delayfbck_tilde_class;
   t_sample f;
 
   t_filter filt;
+  t_filter filthp;
   t_delay del;
+  t_nonlin nl;
 
   t_inlet *x_in2;
   t_outlet*x_out;
@@ -78,10 +81,22 @@ t_int *delayfbck_tilde_perform(t_int *w)
   /* this is the main routine: 
    * mix the 2 input signals into the output signal
    */
+  t_float yDel;
   for(i=0; i<n; i++)
     {
-      filter_step(&x->filt, in1[i], &out[i]);
-      delay_step(&x->del, out[i], &out[i]);
+      // delay line output
+      delay_read(&x->del, &yDel);
+
+      // Nonlinearity
+      nonlin_step(&x->nl, in1[i] + yDel, &out[i]);
+
+      //Filter
+      filter_step(&x->filt, out[i], &out[i]);
+      filter_step(&x->filthp, out[i], &out[i]);
+
+      // Delay line feedback     
+      delay_write(&x->del, out[i]);
+      delay_step(&x->del);    
     }
 
   /* return a pointer to the dataspace for the next dsp-object */
@@ -121,9 +136,13 @@ void delayfbck_tilde_free(t_delayfbck_tilde *x)
 
   // Free the filter
   filter_free(&x->filt);
+  filter_free(&x->filthp);
 
   // Free the delay
   delay_free(&x->del);
+
+  // Free the nonlinearity
+  nonlin_free(&x->nl);
 }
 
 /**
@@ -146,14 +165,18 @@ void *delayfbck_tilde_new(t_floatarg f)
   /* create a new signal-outlet */
   x->x_out = outlet_new(&x->x_obj, &s_signal);
 
-  // Create a 2nd order low-pass filter
-  filter_init(&x->filt, 2);
-  filter_n(&x->filt, 200.0, 2.0, 20.0,  1.0/44100.0);
+  // Create filters
+  filter_lp1(&x->filt, 500.0, 1.0/44100.0);
+  filter_hp1(&x->filthp, 10.0, 1.0/44100.0);
 
   // Init delay line
   delay_init(&x->del, 44100);
-  delay_set_duration(&x->del, 50.5/44100.0,  1.0/44100.0);
-  delay_print(&x->del);
+  delay_set_duration(&x->del, 500.0/44100.0,  1.0/44100.0);
+
+  // Init the nonlinearity
+  nonlin_init(&x->nl);
+  nonlin_set(&x->nl, e_asymmetric_sat, 1.11, 1.0);
+  nonlin_print(&x->nl);
   return (void *)x;
 }
 

@@ -1,3 +1,8 @@
+/* 
+Variable delay line with linearly interpolated tap.
+basile dot graf at a3 dot epfl dot ch
+*/
+
 #include "delay.h"
 #include <stdio.h>      
 #include <stdlib.h>  
@@ -70,16 +75,26 @@ void delay_set_duration(t_delay* del, t_float dur, t_float h)
     }
 }
 
-// 1 setp
-void delay_step(t_delay* del, t_float x, t_float* y)
+// write at current index
+void delay_write(t_delay* del, t_float x)
+{
+    del->v[del->n] = x;
+}
+
+// read relative to current index
+void delay_read(t_delay* del, t_float* y)
 {
     t_int n = del->n;
     t_int vLen = del->maxLength;
     t_float tapn, tapn1;
-    del->v[n] = x;
     tapn  = del->v[(vLen + n - del->integer) % vLen];
     tapn1 = del->v[(vLen + n - del->integer - 1) % vLen];
     *y = (1.0f - del->decimal) * tapn + del->decimal * tapn1;
-    del->n = (n + 1)  % vLen;
+}
+
+// increment index
+void delay_step(t_delay* del)
+{
+    del->n = (del->n + 1)  % del->maxLength;
 }
 

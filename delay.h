@@ -1,3 +1,8 @@
+/* 
+Variable delay line with linearly interpolated tap.
+basile dot graf at a3 dot epfl dot ch
+*/
+
 
 #ifndef _DELAY_H_
 
@@ -21,9 +26,14 @@ void delay_free(t_delay* del);
 // Reset delay state
 void delay_reset(t_delay* del);
 // Set duration in dur in seconds, sample time h
-void delay_set_duration(t_delay* del, t_float dur, t_float h); // [s]
-// 1 setp
-void delay_step(t_delay* del, t_float x, t_float* y);
+void delay_set_duration(t_delay* del, t_float dur, t_float h); 
+
+// write at current index
+void delay_write(t_delay* del, t_float x);
+// read relative to current index
+void delay_read(t_delay* del, t_float* y);
+// increment index
+void delay_step(t_delay* del);
 
 void delay_print(t_delay* del);
 
