@@ -10,6 +10,7 @@
  * for legal issues please see the file LICENSE.txt
  */
 
+// https://github.com/pure-data/externals-howto
 
 /**
  * include the interface to Pd 
@@ -156,6 +157,8 @@ void *delayfbck_tilde_new(t_floatarg f)
   // 1.        , -1.96009608,  0.96089202
   x->filt.a[0] = -1.96009608;
   x->filt.a[1] =  0.96089202;
+ filter_hp1(&x->filt, 200.0, 1.0/44100.0);
+
 
 
   return (void *)x;
