@@ -1,17 +1,13 @@
 #include "filter.h"
-#include <stdio.h>      /* printf, scanf, NULL */
-#include <stdlib.h>     /* calloc, exit, free */
+#include <stdio.h>     
+#include <stdlib.h>     
 #include <math.h>
 
 
 
 
 
-// filt->b = (t_fsample*) calloc(order+1,sizeof(t_fsample));
-//if ((filt->b==NULL) || (filt->a==NULL) || (filt->v==NULL))
-//    {
-//        post("delayfbck: memory alloc failed!");
-//    }
+
 
 void filter_init(t_filter* filt, t_int order)
 {
@@ -37,9 +33,6 @@ void filter_init(t_filter* filt, t_int order)
 
 void filter_free(t_filter* filt)
 {
-    //free(filt->b);
-    //free(filt->a);
-    //free(filt->v);
 }
 
 

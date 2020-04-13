@@ -18,7 +18,7 @@
 #include "m_pd.h"
 
 #include "filter.h"
-
+#include "delay.h"
 
 /**
  * define a new "class" 
@@ -38,6 +38,7 @@ static t_class *delayfbck_tilde_class;
   t_sample f;
 
   t_filter filt;
+  t_delay del;
 
   t_inlet *x_in2;
   t_outlet*x_out;
@@ -74,17 +75,13 @@ t_int *delayfbck_tilde_perform(t_int *w)
   /* just a counter */
   int i;
 
-  t_float inLoc, outLoc;
-
   /* this is the main routine: 
    * mix the 2 input signals into the output signal
    */
   for(i=0; i<n; i++)
     {
-      //out[i]=in1[i]*(1-f_delayfbck);
-      inLoc = in1[i];
-      filter_step(&x->filt, inLoc, &outLoc);
-      out[i] = outLoc;
+      filter_step(&x->filt, in1[i], &out[i]);
+      delay_step(&x->del, out[i], &out[i]);
     }
 
   /* return a pointer to the dataspace for the next dsp-object */
@@ -124,6 +121,9 @@ void delayfbck_tilde_free(t_delayfbck_tilde *x)
 
   // Free the filter
   filter_free(&x->filt);
+
+  // Free the delay
+  delay_free(&x->del);
 }
 
 /**
@@ -148,19 +148,12 @@ void *delayfbck_tilde_new(t_floatarg f)
 
   // Create a 2nd order low-pass filter
   filter_init(&x->filt, 2);
-  
-  // numerator 1.        , -1.98802657,  0.98882251
-  x->filt.b[0] = 1.0;
-  x->filt.b[1] = -1.98802657;
-  x->filt.b[2] = 0.98882251; 
-  // denominator, leading coeff assumed to be 1
-  // 1.        , -1.96009608,  0.96089202
-  x->filt.a[0] = -1.96009608;
-  x->filt.a[1] =  0.96089202;
- filter_n(&x->filt, 200.0, 2.0, 20.0,  1.0/44100.0);
+  filter_n(&x->filt, 200.0, 2.0, 20.0,  1.0/44100.0);
 
-
-
+  // Init delay line
+  delay_init(&x->del, 44100);
+  delay_set_duration(&x->del, 50.5/44100.0,  1.0/44100.0);
+  delay_print(&x->del);
   return (void *)x;
 }
 
