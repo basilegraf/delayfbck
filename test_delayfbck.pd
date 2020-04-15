@@ -1,4 +1,4 @@
-#N canvas 480 288 1259 691 10;
+#N canvas 470 280 1259 691 10;
 #X obj 150 525 dac~ 1;
 #X floatatom 148 101 0 0 0 0 - - -;
 #X text 148 549 audio output;
@@ -1380,7 +1380,7 @@
 #X obj 983 199 tabwrite~ t;
 #X obj 983 175 bng 15 250 50 0 empty empty empty 0 -6 0 8 -262144 -1
 -1;
-#X obj 823 36 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 1 1
+#X obj 823 36 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 0 1
 ;
 #N canvas 379 254 494 344 META 0;
 #X text 12 165 HELP_PATCH_AUTHORS "pd meta" information added by Jonathan
@@ -1396,6 +1396,7 @@ Wilkes for Pd version 0.42.;
 #X restore 1080 265 pd META;
 #X obj 691 39 creb;
 #X obj 823 134 ead~ 0 0;
+#X msg 204 185 filter 0 hp1 100 22 33.2;
 #X connect 1 0 3 0;
 #X connect 4 0 5 1;
 #X connect 5 0 7 0;
@@ -1437,3 +1438,4 @@ Wilkes for Pd version 0.42.;
 #X connect 65 0 54 0;
 #X connect 68 0 63 0;
 #X connect 68 0 5 0;
+#X connect 69 0 5 0;

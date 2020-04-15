@@ -180,6 +180,34 @@ void *delayfbck_tilde_new(t_floatarg f)
   return (void *)x;
 }
 
+// Set filter
+// Message format:
+// "filter filtNum filtType floatArg1 , ..., floatArgn"
+//         A_FLOAT A_SYMBOL A_SYMBOL         A_SYMBOL
+//         int     symbol   float            float
+// Example:
+// "filter 0       lp2      150.0    0.7"
+void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
+{
+// TODO ! But the method is called properly now !
+  post("delayfbck: filter1 with %d arguments", argc);
+  for (int k=0; k<argc; k++)
+  {
+      post("delayfbck: argc %d type = %d", k, argv[k].a_type);
+  }
+  if (argc < 3)
+  {
+    error("delayfbck: Too few arguments.");
+    return;
+  }
+    
+  /*else if (argv[0].a_type != A_SYMBOL)
+  {
+    error("delayfbck: First argument should be a symbol.");
+    return;
+  }*/
+}
+
 
 /**
  * define the function-space of the class
@@ -193,6 +221,11 @@ void delayfbck_tilde_setup(void) {
 	sizeof(t_delayfbck_tilde),
         CLASS_DEFAULT, 
         A_DEFFLOAT, 0);
+
+  class_addmethod(delayfbck_tilde_class,
+      (t_method)set_filter, gensym("filter"),
+      A_GIMME, 0);
+  //class_addlist(delayfbck_tilde_class,  (t_method)set_filter1);
 
   /* whenever the audio-engine is turned on, the "delayfbck_tilde_dsp()" 
    * function will get called
