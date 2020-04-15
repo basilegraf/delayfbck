@@ -167,15 +167,15 @@ void *delayfbck_tilde_new(t_floatarg f)
 
   // Create filters
   filter_lp1(&x->filt, 500.0, 1.0/44100.0);
-  filter_hp1(&x->filthp, 10.0, 1.0/44100.0);
+  filter_hp1(&x->filthp, 1.0, 1.0/44100.0);
 
   // Init delay line
   delay_init(&x->del, 44100);
-  delay_set_duration(&x->del, 500.0/44100.0,  1.0/44100.0);
+  delay_set_duration(&x->del, 1.0/100.0,  1.0/44100.0);
 
   // Init the nonlinearity
   nonlin_init(&x->nl);
-  nonlin_set(&x->nl, e_asymmetric_sat, 1.11, 1.0);
+  nonlin_set(&x->nl, e_symmetric_sat, -1.05, 1.0);
   nonlin_print(&x->nl);
   return (void *)x;
 }

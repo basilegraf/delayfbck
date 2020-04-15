@@ -90,12 +90,13 @@ void filter_hp2(t_filter* filt, t_float f, t_float z, t_float h)
     filt->order = 2;
     t_float w = 2.0 * PI * f;
     t_float hw = h * w;
+    t_float hw2 = hw * hw;
     t_float a0i = 1.0 / (4.0 + hw * (hw + 4.0*z));
-    filt->b[0] = a0i * 4.0 * (1.0 + hw * z);
+    filt->b[0] = a0i * 4.0 ;
     filt->b[1] = a0i * (-8.0);
-    filt->b[2] = a0i * 4.0 * (1.0 - hw * z);
+    filt->b[2] = a0i * 4.0 ;
 
-    filt->a[0] = a0i * (-8.0 + 2.0 * hw * hw);
+    filt->a[0] = a0i * (-8.0 + 2.0 * hw2);
     filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));    
 }
 
