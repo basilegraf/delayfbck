@@ -41,6 +41,7 @@ static t_class *delayfbck_tilde_class;
   t_sample f;
 
   // Filter types symbols
+  t_symbol* sym_g;
   t_symbol* sym_lp1;
   t_symbol* sym_hp1;
   t_symbol* sym_lp2;
@@ -52,8 +53,6 @@ static t_class *delayfbck_tilde_class;
 
   t_float sampleTime; // elsewhere??
 
-  t_filter filt;
-  t_filter filthp;
   t_delay del;
   t_nonlin nl;
 
@@ -105,8 +104,10 @@ t_int *delayfbck_tilde_perform(t_int *w)
       nonlin_step(&x->nl, in1[i] + yDel, &out[i]);
 
       //Filter
-      filter_step(&x->filt, out[i], &out[i]);
-      filter_step(&x->filthp, out[i], &out[i]);
+      for (int k=0; k<MAX_NUM_FILTERS; k++)
+      {
+        filter_step(&x->filters[k], out[i], &out[i]);
+      }
 
       // Delay line feedback     
       delay_write(&x->del, out[i]);
@@ -149,8 +150,10 @@ void delayfbck_tilde_free(t_delayfbck_tilde *x)
   outlet_free(x->x_out);
 
   // Free the filter
-  filter_free(&x->filt);
-  filter_free(&x->filthp);
+  for (int k=0; k<MAX_NUM_FILTERS; k++)
+  {
+     filter_free(&x->filters[k]);
+  }
 
   // Free the delay
   delay_free(&x->del);
@@ -180,6 +183,7 @@ void *delayfbck_tilde_new(t_floatarg f)
   x->x_out = outlet_new(&x->x_obj, &s_signal);
 
   // Create filter type symbols
+  x->sym_g   = gensym("g");
   x->sym_lp1 = gensym("lp1");
   x->sym_hp1 = gensym("hp1");
   x->sym_lp2 = gensym("lp2");
@@ -193,10 +197,6 @@ void *delayfbck_tilde_new(t_floatarg f)
   {
     filter_gain(&x->filters[k], 1.0);
   }
-
-  // Create filters
-  filter_lp1(&x->filt, 500.0, 1.0/44100.0);
-  filter_hp1(&x->filthp, 1.0, 1.0/44100.0);
 
   // Init delay line
   delay_init(&x->del, 44100);
@@ -215,7 +215,7 @@ void *delayfbck_tilde_new(t_floatarg f)
 //         A_FLOAT A_SYMBOL A_SYMBOL         A_SYMBOL
 //         int     symbol   float            float
 // Example:
-// "filter 1       lp2      150.0    0.7"
+// "filter 0       lp2      150.0    0.7"
 void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 {
 // TODO ! But the method is called properly now !
@@ -260,7 +260,12 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
     error("delayfbck filter: Filter number out of range 0...%d.", MAX_NUM_FILTERS-1);
   }
   
-  if (filtType == x->sym_lp1)
+  if (filtType == x->sym_g)
+  {
+    post("delayfbck: g");
+    filter_gain(&x->filters[filtNum], filtarg1);
+  }
+  else if (filtType == x->sym_lp1)
   {
     post("delayfbck: lp1");
     filter_lp1(&x->filters[filtNum], filtarg1, x->sampleTime);
@@ -284,15 +289,8 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   {
     post("delayfbck: n");
     t_float filtarg3 = atom_getfloatarg(4, argc, argv);
-    t_float filtarg4 = atom_getfloatarg(5, argc, argv);
     filter_n(&x->filters[filtNum], filtarg1, filtarg2, filtarg3, x->sampleTime);
   }
-
-  /*else if (argv[0].a_type != A_SYMBOL)
-  {
-    error("delayfbck: First argument should be a symbol.");
-    return;
-  }*/
 }
 
 
