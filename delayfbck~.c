@@ -343,6 +343,13 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 }
 
 
+void set_delay(t_delayfbck_tilde* x, t_floatarg duration)
+{
+  post("delayfbck: set delay to %fs", duration);
+  delay_set_duration(&x->del, duration, x->sampleTime); 
+}
+
+
 /**
  * define the function-space of the class
  * within a single-object external the name of this function is very special
@@ -363,6 +370,10 @@ void delayfbck_tilde_setup(void) {
   class_addmethod(delayfbck_tilde_class,
       (t_method)set_nonlinearity, gensym("nonlin"),
       A_GIMME, 0);
+
+  class_addmethod(delayfbck_tilde_class,
+        (t_method)set_delay, gensym("delay"),
+        A_DEFFLOAT, 0);
 
 
   /* whenever the audio-engine is turned on, the "delayfbck_tilde_dsp()" 
