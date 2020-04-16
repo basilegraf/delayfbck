@@ -28,12 +28,17 @@ void nonlin_free(t_nonlin* nl)
 // Set the type, gain and saturation
 // Note, negative and zero gain allowed
 //       negative saturation same as positive
-void nonlin_set(t_nonlin* nl, t_int type, t_float gain, t_float sat)
+int nonlin_set(t_nonlin* nl, t_int type, t_float gain, t_float sat)
 {
-    if (type < 0 || type >= e_nonlin_num_types) error("nonlin : undefined type number.");
+    if (type < 0 || type >= e_nonlin_num_types)
+    {
+       error("nonlin : undefined type number.");
+       return -1;
+    }
     nl->type = type;
     nl->gain = gain;
     nl->saturation = sat;
+    return 0;
 }
 
 // 1 setp
@@ -69,22 +74,22 @@ void nonlin_print(t_nonlin* nl)
     switch (nl->type)
     {
         case e_symmetric_sat:
-            post("nonlin: Symmetric saturation");
+            post("nonlin: Symmetric saturation gain=%f, saturation=%f", nl->gain, nl->saturation);
         break;
         case e_asymmetric_sat:
-            post("nonlin: Asymmetric saturation");
+            post("nonlin: Asymmetric saturation gain=%f, saturation=%f", nl->gain, nl->saturation);
         break;
         case e_symmetric_sigmoid:
-            post("nonlin: Symmetric sigmoid");
+            post("nonlin: Symmetric sigmoid gain=%f, saturation=%f", nl->gain, nl->saturation);
         break;
         case e_asymmetric_sigmoid:
-            post("nonlin: Asymmetric sigmoid");
+            post("nonlin: Asymmetric sigmoid gain=%f, saturation=%f", nl->gain, nl->saturation);
         break;
         default:
-            post("nonlin: Undefined nonlinearity, using linear gain");
+            post("nonlin: Undefined nonlinearity, using linear gain=%f", nl->gain);
         break;
     }
-    post("nonlin: gain       = %f", nl->gain);
-    post("nonlin: saturation = %f", nl->saturation);
+    //post("nonlin: gain       = %f", nl->gain);
+    //post("nonlin: saturation = %f", nl->saturation);
 }
  

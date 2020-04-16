@@ -48,6 +48,12 @@ static t_class *delayfbck_tilde_class;
   t_symbol* sym_hp2;
   t_symbol* sym_n;
 
+  // Create nonlineaity type symbols
+  t_symbol* sym_symmetric_sat;
+  t_symbol* sym_asymmetric_sat;
+  t_symbol* sym_symmetric_sigmoid;
+  t_symbol* sym_asymmetric_sigmoid;
+
   // Filter array
   t_filter filters[MAX_NUM_FILTERS];
 
@@ -190,6 +196,13 @@ void *delayfbck_tilde_new(t_floatarg f)
   x->sym_hp2 = gensym("hp2");
   x->sym_n = gensym("n");
 
+  // Create nonlineaity type symbols
+  x->sym_symmetric_sat = gensym("symmetric_sat");
+  x->sym_asymmetric_sat = gensym("asymmetric_sat");
+  x->sym_symmetric_sigmoid = gensym("symmetric_sigmoid");
+  x->sym_asymmetric_sigmoid = gensym("asymmetric_sigmoid");
+
+
   x->sampleTime = 1.0 / 44100.0; // TODO
 
   // Initialise filters to unit gain
@@ -204,7 +217,7 @@ void *delayfbck_tilde_new(t_floatarg f)
 
   // Init the nonlinearity
   nonlin_init(&x->nl);
-  nonlin_set(&x->nl, e_symmetric_sat, -1.05, 1.0);
+  nonlin_set(&x->nl, e_symmetric_sat, 1.0, 1.0);
   nonlin_print(&x->nl);
   return (void *)x;
 }
@@ -294,6 +307,42 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 }
 
 
+
+void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
+{
+  post("delayfbck: nonlin with %d arguments", argc);
+  for (int k=0; k<argc; k++)
+
+  if (argc != 3)
+  {
+    error("delayfbck nonlin: 3 arguments expected");
+    return;
+  }
+  else if (argv[0].a_type != A_SYMBOL)
+  {
+    error("delayfbck nonlin: Arguments 1 should be a symbol");
+    return;
+  }
+  else if (argv[1].a_type != A_FLOAT || argv[2].a_type != A_FLOAT)
+  {
+    error("delayfbck nonlin: Arguments 2 and 3 should be floats");
+    return;
+  }
+
+  t_symbol* nonlinType = atom_getsymbolarg(0, argc, argv);
+  t_float gain = atom_getfloatarg(1, argc, argv);
+  t_float sat  = atom_getfloatarg(2, argc, argv);
+
+  if      (nonlinType == x->sym_symmetric_sat)      {if (nonlin_set(&x->nl, e_symmetric_sat,      gain, sat)) return;}
+  else if (nonlinType == x->sym_asymmetric_sat)     {if (nonlin_set(&x->nl, e_asymmetric_sat,     gain, sat)) return;}
+  else if (nonlinType == x->sym_symmetric_sigmoid)  {if (nonlin_set(&x->nl, e_symmetric_sigmoid,  gain, sat)) return;}
+  else if (nonlinType == x->sym_asymmetric_sigmoid) {if (nonlin_set(&x->nl, e_asymmetric_sigmoid, gain, sat)) return;}
+  else {error("Unknown nonlin type");}
+ 
+  nonlin_print(&x->nl);
+}
+
+
 /**
  * define the function-space of the class
  * within a single-object external the name of this function is very special
@@ -310,7 +359,11 @@ void delayfbck_tilde_setup(void) {
   class_addmethod(delayfbck_tilde_class,
       (t_method)set_filter, gensym("filter"),
       A_GIMME, 0);
-  //class_addlist(delayfbck_tilde_class,  (t_method)set_filter1);
+
+  class_addmethod(delayfbck_tilde_class,
+      (t_method)set_nonlinearity, gensym("nonlin"),
+      A_GIMME, 0);
+
 
   /* whenever the audio-engine is turned on, the "delayfbck_tilde_dsp()" 
    * function will get called

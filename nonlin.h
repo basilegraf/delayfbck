@@ -30,7 +30,7 @@ void nonlin_init(t_nonlin* nl);
 void nonlin_free(t_nonlin* nl);
 
 // Set the type, gain and saturation
-void nonlin_set(t_nonlin* nl, t_int type, t_float gain, t_float sat);
+int nonlin_set(t_nonlin* nl, t_int type, t_float gain, t_float sat);
 // 1 setp
 void nonlin_step(t_nonlin* nl, t_float x, t_float* y);
 
