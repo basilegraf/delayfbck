@@ -67,6 +67,14 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
 }
 
 
+// Static gain
+void filter_gain(t_filter* filt, t_float g)
+{
+    filt->order = 0;
+    filt->b[0] = g;
+}
+
+
 // 2nd order lowpass with freq f and damping z
 void filter_lp2(t_filter* filt, t_float f, t_float z, t_float h)
 {

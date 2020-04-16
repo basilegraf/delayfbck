@@ -27,6 +27,8 @@ void filter_step(t_filter* filt, t_float x, t_float* y);
 
 // filter designs
 
+// Static gain
+void filter_gain(t_filter* filt, t_float g);
 // 2nd order lowpass with cutoff freq f, damping z and sample time h
 void filter_lp2(t_filter* filt, t_float f, t_float z, t_float h);
 // 2nd order highpass with cutoff freq f, damping z and sample time h

@@ -1396,7 +1396,7 @@ Wilkes for Pd version 0.42.;
 #X restore 1080 265 pd META;
 #X obj 691 39 creb;
 #X obj 823 134 ead~ 0 0;
-#X msg 204 185 filter 0 hp1 100 22 33.2;
+#X msg 204 185 filter 0 lp1 100;
 #X connect 1 0 3 0;
 #X connect 4 0 5 1;
 #X connect 5 0 7 0;

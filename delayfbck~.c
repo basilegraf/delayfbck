@@ -21,6 +21,8 @@
 #include "delay.h"
 #include "nonlin.h"
 
+#define MAX_NUM_FILTERS 5
+
 /**
  * define a new "class" 
  */
@@ -37,6 +39,18 @@ static t_class *delayfbck_tilde_class;
   t_object  x_obj;
   t_sample f_delayfbck;
   t_sample f;
+
+  // Filter types symbols
+  t_symbol* sym_lp1;
+  t_symbol* sym_hp1;
+  t_symbol* sym_lp2;
+  t_symbol* sym_hp2;
+  t_symbol* sym_n;
+
+  // Filter array
+  t_filter filters[MAX_NUM_FILTERS];
+
+  t_float sampleTime; // elsewhere??
 
   t_filter filt;
   t_filter filthp;
@@ -165,6 +179,21 @@ void *delayfbck_tilde_new(t_floatarg f)
   /* create a new signal-outlet */
   x->x_out = outlet_new(&x->x_obj, &s_signal);
 
+  // Create filter type symbols
+  x->sym_lp1 = gensym("lp1");
+  x->sym_hp1 = gensym("hp1");
+  x->sym_lp2 = gensym("lp2");
+  x->sym_hp2 = gensym("hp2");
+  x->sym_n = gensym("n");
+
+  x->sampleTime = 1.0 / 44100.0; // TODO
+
+  // Initialise filters to unit gain
+  for (int k=0; k<MAX_NUM_FILTERS; k++) 
+  {
+    filter_gain(&x->filters[k], 1.0);
+  }
+
   // Create filters
   filter_lp1(&x->filt, 500.0, 1.0/44100.0);
   filter_hp1(&x->filthp, 1.0, 1.0/44100.0);
@@ -186,21 +215,79 @@ void *delayfbck_tilde_new(t_floatarg f)
 //         A_FLOAT A_SYMBOL A_SYMBOL         A_SYMBOL
 //         int     symbol   float            float
 // Example:
-// "filter 0       lp2      150.0    0.7"
+// "filter 1       lp2      150.0    0.7"
 void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 {
 // TODO ! But the method is called properly now !
-  post("delayfbck: filter1 with %d arguments", argc);
+  post("delayfbck: filter with %d arguments", argc);
   for (int k=0; k<argc; k++)
   {
-      post("delayfbck: argc %d type = %d", k, argv[k].a_type);
+      post("delayfbck filter: argc %d type = %d", k, argv[k].a_type);
   }
   if (argc < 3)
   {
-    error("delayfbck: Too few arguments.");
+    error("delayfbck filter: Too few arguments.");
     return;
   }
-    
+  else if (argv[0].a_type != A_FLOAT)
+  {
+    error("delayfbck filter: Arguments 1 should be an integer");
+    return;
+  }
+  else if (argv[1].a_type != A_SYMBOL)
+  {
+    error("delayfbck filter: Arguments 2 should be a symbol");
+    return;
+  }
+  else
+  {
+    int allFloats = 1;
+    for (int k=2; k<argc; k++) allFloats &= (argv[k].a_type == A_FLOAT);
+    if (!allFloats)
+    {
+      error("delayfbck filter: Arguments types should be: integer, symbol, floats, <float>, ... , <float>.");
+      return;
+    }
+  }
+
+  t_int filtNum = atom_getintarg(0, argc, argv);
+  t_symbol* filtType = atom_getsymbolarg(1, argc, argv);
+  t_float filtarg1 = atom_getfloatarg(2, argc, argv);
+  t_float filtarg2 = atom_getfloatarg(3, argc, argv);
+
+  if (filtNum < 0 || filtNum >= MAX_NUM_FILTERS)
+  {
+    error("delayfbck filter: Filter number out of range 0...%d.", MAX_NUM_FILTERS-1);
+  }
+  
+  if (filtType == x->sym_lp1)
+  {
+    post("delayfbck: lp1");
+    filter_lp1(&x->filters[filtNum], filtarg1, x->sampleTime);
+  }
+  else if (filtType == x->sym_hp1)
+  {
+    post("delayfbck: hp1");
+    filter_hp1(&x->filters[filtNum], filtarg1, x->sampleTime);
+  }
+  else if (filtType == x->sym_lp2)
+  {
+    post("delayfbck: lp2");
+    filter_lp2(&x->filters[filtNum], filtarg1, filtarg2, x->sampleTime);
+  }
+  else if (filtType == x->sym_hp2)
+  {
+    post("delayfbck: hp2");
+    filter_hp2(&x->filters[filtNum], filtarg1, filtarg2, x->sampleTime);
+  }
+  else if (filtType == x->sym_n)
+  {
+    post("delayfbck: n");
+    t_float filtarg3 = atom_getfloatarg(4, argc, argv);
+    t_float filtarg4 = atom_getfloatarg(5, argc, argv);
+    filter_n(&x->filters[filtNum], filtarg1, filtarg2, filtarg3, x->sampleTime);
+  }
+
   /*else if (argv[0].a_type != A_SYMBOL)
   {
     error("delayfbck: First argument should be a symbol.");
