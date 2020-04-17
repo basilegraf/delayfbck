@@ -59,6 +59,8 @@ static t_class *delayfbck_tilde_class;
 
   t_float sampleTime; // elsewhere??
 
+  t_float delDuration;
+
   t_delay del;
   t_nonlin nl;
 
@@ -88,10 +90,11 @@ t_int *delayfbck_tilde_perform(t_int *w)
   t_delayfbck_tilde *x = (t_delayfbck_tilde *)(w[1]);
   /* here is a pointer to the t_sample arrays that hold the 2 input signals */
   t_sample  *in1 =    (t_sample *)(w[2]);
+  t_sample  *in2 =    (t_sample *)(w[3]);
   /* here comes the signalblock that will hold the output signal */
-  t_sample  *out =    (t_sample *)(w[3]);
+  t_sample  *out =    (t_sample *)(w[4]);
   /* all signalblocks are of the same length */
-  int          n =           (int)(w[4]);
+  int          n =           (int)(w[5]);
   /* get (and clip) the mixing-factor */
   t_sample f_delayfbck = (x->f_delayfbck<0)?0.0:(x->f_delayfbck>1)?1.0:x->f_delayfbck;
   /* just a counter */
@@ -103,6 +106,9 @@ t_int *delayfbck_tilde_perform(t_int *w)
   t_float yDel;
   for(i=0; i<n; i++)
     {
+      // Modulate delay duration with second input
+      delay_set_duration(&x->del, x->delDuration * (1.0 + in2[i]), x->sampleTime); 
+
       // delay line output
       delay_read(&x->del, &yDel);
 
@@ -121,7 +127,7 @@ t_int *delayfbck_tilde_perform(t_int *w)
     }
 
   /* return a pointer to the dataspace for the next dsp-object */
-  return (w+5);
+  return (w+6);
 }
 
 
@@ -136,11 +142,11 @@ void delayfbck_tilde_dsp(t_delayfbck_tilde *x, t_signal **sp)
    * the delayfbck_tilde_perform() will expect "4" arguments (packed into an
    * t_int-array), which are:
    * the objects data-space, 3 signal vectors (which happen to be
-   * 1 input signal and 1 output signal) and the length of the
+   * 2 input signal and 1 output signal) and the length of the
    * signal vectors (all vectors are of the same length)
    */
-  dsp_add(delayfbck_tilde_perform, 4, x,
-          sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
+  dsp_add(delayfbck_tilde_perform, 5, x,
+          sp[0]->s_vec, sp[1]->s_vec, sp[2]->s_vec, sp[0]->s_n);
 }
 
 /**
@@ -180,10 +186,10 @@ void *delayfbck_tilde_new(t_floatarg f)
   x->f_delayfbck = f;
   
   /* create a new signal-inlet */
-  //x->x_in2 = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
+  x->x_in2 = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
 
   /* create a new passive inlet for the mixing-factor */
-  x->x_in2 = floatinlet_new (&x->x_obj, &x->f_delayfbck);
+  //x->x_in2 = floatinlet_new (&x->x_obj, &x->f_delayfbck);
 
   /* create a new signal-outlet */
   x->x_out = outlet_new(&x->x_obj, &s_signal);
@@ -213,6 +219,7 @@ void *delayfbck_tilde_new(t_floatarg f)
 
   // Init delay line
   delay_init(&x->del, 44100);
+  x->delDuration = 1.0/100.0;
   delay_set_duration(&x->del, 1.0/100.0,  1.0/44100.0);
 
   // Init the nonlinearity
@@ -346,6 +353,7 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 void set_delay(t_delayfbck_tilde* x, t_floatarg duration)
 {
   post("delayfbck: set delay to %fs", duration);
+  x->delDuration = duration;
   delay_set_duration(&x->del, duration, x->sampleTime); 
 }
 
