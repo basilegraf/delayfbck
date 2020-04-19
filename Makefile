@@ -14,5 +14,5 @@ class.sources = delayfbck~.c
 datafiles =
 
 # include Makefile.pdlibbuilder from submodule directory 'pd-lib-builder'
-PDLIBBUILDER_DIR=../../tutorial/externals-howto/pd-lib-builder/
+PDLIBBUILDER_DIR=../tutorial/externals-howto/pd-lib-builder/
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
