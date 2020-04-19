@@ -1,6 +1,6 @@
 /*
  * HOWTO write an External for Pure data
- * (c) 2001-2006 IOhannes m zmölnig zmoelnig[AT]iem.at
+ * (c) 2001-2006 IOhannes m zmÃ¶lnig zmoelnig[AT]iem.at
  *
  * this is the source-code for the fourth example in the HOWTO
  * it creates a simple dsp-object:
@@ -15,6 +15,8 @@
 /**
  * include the interface to Pd 
  */
+ 
+#include <math.h>
 #include "m_pd.h"
 
 #include "filter.h"
@@ -56,6 +58,9 @@ static t_class *delayfbck_tilde_class;
 
   // Filter array
   t_filter filters[MAX_NUM_FILTERS];
+  
+  // Envelope detection filter
+  t_filter envelopeFilt;
 
   t_float sampleTime; // elsewhere??
 
@@ -65,7 +70,8 @@ static t_class *delayfbck_tilde_class;
   t_nonlin nl;
 
   t_inlet *x_in2;
-  t_outlet*x_out;
+  t_outlet* x_out1;
+  t_outlet* x_out2;
 } t_delayfbck_tilde;
 
 
@@ -92,9 +98,10 @@ t_int *delayfbck_tilde_perform(t_int *w)
   t_sample  *in1 =    (t_sample *)(w[2]);
   t_sample  *in2 =    (t_sample *)(w[3]);
   /* here comes the signalblock that will hold the output signal */
-  t_sample  *out =    (t_sample *)(w[4]);
+  t_sample  *out1 =   (t_sample *)(w[4]);
+  t_sample  *out2 =   (t_sample *)(w[5]);
   /* all signalblocks are of the same length */
-  int          n =           (int)(w[5]);
+  int          n =           (int)(w[6]);
   /* get (and clip) the mixing-factor */
   t_sample f_delayfbck = (x->f_delayfbck<0)?0.0:(x->f_delayfbck>1)?1.0:x->f_delayfbck;
   /* just a counter */
@@ -113,21 +120,25 @@ t_int *delayfbck_tilde_perform(t_int *w)
       delay_read(&x->del, &yDel);
 
       // Nonlinearity
-      nonlin_step(&x->nl, in1[i] + yDel, &out[i]);
+      nonlin_step(&x->nl, in1[i] + yDel, &out1[i]);
 
       //Filter
       for (int k=0; k<MAX_NUM_FILTERS; k++)
       {
-        filter_step(&x->filters[k], out[i], &out[i]);
+        filter_step(&x->filters[k], out1[i], &out1[i]);
       }
 
       // Delay line feedback     
-      delay_write(&x->del, out[i]);
+      delay_write(&x->del, out1[i]);
       delay_step(&x->del);    
+      
+      // second output: Envelope filter
+      out2[i] = fabsf(out1[i]);
+      filter_step(&x->envelopeFilt, out2[i], &out2[i]);
     }
 
   /* return a pointer to the dataspace for the next dsp-object */
-  return (w+6);
+  return (w+7);
 }
 
 
@@ -142,11 +153,11 @@ void delayfbck_tilde_dsp(t_delayfbck_tilde *x, t_signal **sp)
    * the delayfbck_tilde_perform() will expect "4" arguments (packed into an
    * t_int-array), which are:
    * the objects data-space, 3 signal vectors (which happen to be
-   * 2 input signal and 1 output signal) and the length of the
+   * 2 input signal and 2 output signals) and the length of the
    * signal vectors (all vectors are of the same length)
    */
-  dsp_add(delayfbck_tilde_perform, 5, x,
-          sp[0]->s_vec, sp[1]->s_vec, sp[2]->s_vec, sp[0]->s_n);
+  dsp_add(delayfbck_tilde_perform, 6, x,
+          sp[0]->s_vec, sp[1]->s_vec, sp[2]->s_vec, sp[3]->s_vec, sp[0]->s_n);
 }
 
 /**
@@ -159,7 +170,8 @@ void delayfbck_tilde_free(t_delayfbck_tilde *x)
   inlet_free(x->x_in2);
 
   /* free any ressources associated with the given outlet */
-  outlet_free(x->x_out);
+  outlet_free(x->x_out1);
+  outlet_free(x->x_out2);
 
   // Free the filter
   for (int k=0; k<MAX_NUM_FILTERS; k++)
@@ -192,7 +204,8 @@ void *delayfbck_tilde_new(t_floatarg f)
   //x->x_in2 = floatinlet_new (&x->x_obj, &x->f_delayfbck);
 
   /* create a new signal-outlet */
-  x->x_out = outlet_new(&x->x_obj, &s_signal);
+  x->x_out1 = outlet_new(&x->x_obj, &s_signal);
+  x->x_out2 = outlet_new(&x->x_obj, &s_signal);
 
   // Create filter type symbols
   x->sym_g   = gensym("g");
@@ -216,6 +229,9 @@ void *delayfbck_tilde_new(t_floatarg f)
   {
     filter_gain(&x->filters[k], 1.0);
   }
+  
+  // Init envelope filter
+  filter_lp1(&x->envelopeFilt, 10.0, 1.0/44100.0);
 
   // Init delay line
   delay_init(&x->del, 44100);
