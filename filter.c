@@ -156,3 +156,12 @@ void filter_n(t_filter* filt, t_float f, t_float g, t_float bHz, t_float h)
     filt->a[1] = a0i * ((-2.0*bh + sqg*(4 + hw2)));
 }
 
+
+// PI controller 
+void filter_PI(t_filter* filt, t_float kp, t_float ki, t_float h)
+{
+    filt->order = 1;
+    filt->b[0] = kp + ki/h;
+    filt->b[1] = -kp;
+    filt->a[0] = -1.0;
+}

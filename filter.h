@@ -40,5 +40,8 @@ void filter_hp1(t_filter* filt, t_float f, t_float h);
 // Notch filter with frequency f, gain g, bandwidth b and sample time h
 void filter_n(t_filter* filt, t_float f, t_float g, t_float b, t_float h);
 
+// PI controller 
+void filter_PI(t_filter* filt, t_float kp ,t_float ki, t_float h);
+
 
 #endif /* _FILTER_H_ */

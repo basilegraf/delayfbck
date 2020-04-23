@@ -61,6 +61,11 @@ static t_class *delayfbck_tilde_class;
   
   // Envelope detection filter
   t_filter envelopeFilt;
+  
+  // Amplitude PI controller (as filter)
+  t_filter piControllerFilt;
+  t_float amplitudeRef;
+  t_float piOut;
 
   t_float sampleTime; // elsewhere??
 
@@ -68,6 +73,7 @@ static t_class *delayfbck_tilde_class;
 
   t_delay del;
   t_nonlin nl;
+  t_float nl_gainBase;
 
   t_inlet *x_in2;
   t_outlet* x_out1;
@@ -120,6 +126,7 @@ t_int *delayfbck_tilde_perform(t_int *w)
       delay_read(&x->del, &yDel);
 
       // Nonlinearity
+      x->nl.gain = x->nl_gainBase + x->piOut; // Update gain with controller output
       nonlin_step(&x->nl, in1[i] + yDel, &out1[i]);
 
       //Filter
@@ -135,6 +142,9 @@ t_int *delayfbck_tilde_perform(t_int *w)
       // second output: Envelope filter
       out2[i] = fabsf(out1[i]);
       filter_step(&x->envelopeFilt, out2[i], &out2[i]);
+      
+      // PI amplitude controller
+      filter_step(&x->piControllerFilt, x->amplitudeRef - out2[i], &x->piOut);
     }
 
   /* return a pointer to the dataspace for the next dsp-object */
@@ -220,8 +230,7 @@ void *delayfbck_tilde_new(t_floatarg f)
   x->sym_asymmetric_sat = gensym("asymmetric_sat");
   x->sym_symmetric_sigmoid = gensym("symmetric_sigmoid");
   x->sym_asymmetric_sigmoid = gensym("asymmetric_sigmoid");
-
-
+  
   x->sampleTime = 1.0 / 44100.0; // TODO
 
   // Initialise filters to unit gain
@@ -231,16 +240,22 @@ void *delayfbck_tilde_new(t_floatarg f)
   }
   
   // Init envelope filter
-  filter_lp1(&x->envelopeFilt, 10.0, 1.0/44100.0);
+  filter_lp1(&x->envelopeFilt, 10.0, x->sampleTime);
+  
+  // Init PI amplitude controller with zero gains and reference
+  filter_PI(&x->piControllerFilt, 0.0, 0.0, x->sampleTime);
+  x->amplitudeRef = 0.0;
+  x->piOut = 0.0;
 
   // Init delay line
   delay_init(&x->del, 44100);
   x->delDuration = 1.0/100.0;
-  delay_set_duration(&x->del, 1.0/100.0,  1.0/44100.0);
+  delay_set_duration(&x->del, 1.0/100.0,  x->sampleTime);
 
   // Init the nonlinearity
   nonlin_init(&x->nl);
-  nonlin_set(&x->nl, e_symmetric_sat, 1.0, 1.0);
+  x->nl_gainBase = 1.0;
+  nonlin_set(&x->nl, e_symmetric_sat, x->nl_gainBase, 1.0);
   nonlin_print(&x->nl);
   return (void *)x;
 }
@@ -356,6 +371,7 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   t_float gain = atom_getfloatarg(1, argc, argv);
   t_float sat  = atom_getfloatarg(2, argc, argv);
 
+  x->nl_gainBase = gain;
   if      (nonlinType == x->sym_symmetric_sat)      {if (nonlin_set(&x->nl, e_symmetric_sat,      gain, sat)) return;}
   else if (nonlinType == x->sym_asymmetric_sat)     {if (nonlin_set(&x->nl, e_asymmetric_sat,     gain, sat)) return;}
   else if (nonlinType == x->sym_symmetric_sigmoid)  {if (nonlin_set(&x->nl, e_symmetric_sigmoid,  gain, sat)) return;}
@@ -371,6 +387,15 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration)
   post("delayfbck: set delay to %fs", duration);
   x->delDuration = duration;
   delay_set_duration(&x->del, duration, x->sampleTime); 
+}
+
+
+void set_amplitude_control(t_delayfbck_tilde* x, t_floatarg lpfreq, t_floatarg amplRef, t_floatarg Pgain, t_floatarg Igain)
+{
+  post("delayfbck: set amplitude controller, lpFreq %2.1f, amplitude %1.2f, P %f, I %g", lpfreq, amplRef, Pgain, Igain);
+  filter_lp1(&x->envelopeFilt, lpfreq, x->sampleTime);
+  filter_PI(&x->piControllerFilt, Pgain, Igain, x->sampleTime);
+  x->amplitudeRef = amplRef;
 }
 
 
@@ -398,6 +423,12 @@ void delayfbck_tilde_setup(void) {
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_delay, gensym("delay"),
         A_DEFFLOAT, 0);
+        
+  class_addmethod(delayfbck_tilde_class,
+        (t_method)set_amplitude_control, gensym("ampctrl"),
+        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, 0);
+        
+        
 
 
   /* whenever the audio-engine is turned on, the "delayfbck_tilde_dsp()" 
