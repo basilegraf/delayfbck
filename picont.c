@@ -31,10 +31,10 @@ void picont_free(t_picont* cont)
 
 void picont_step(t_picont* cont, t_float x, t_float* y, t_float h)
 {
-    cont->int_state += h * x;
+    cont->int_state += cont->ki * h * x;
     cont->int_state = fminf(cont->int_state,  cont->int_sat);
     cont->int_state = fmaxf(cont->int_state, -cont->int_sat);
-    *y = cont->kp * x + cont->ki * cont->int_state;
+    *y = cont->kp * x + cont->int_state;
     return;
 }
 

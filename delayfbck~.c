@@ -428,22 +428,22 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 
 void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime)
 {
-  post("delayfbck: set delay to %fs", duration);
-  x->delDurationNSteps = (t_int) roundf(delRampTime / x->sampleTime);
-  x->delDurationNSteps = x->delDurationNSteps >= 1 ? x->delDurationNSteps : 1;
-  x->delDurationStep = (duration - x->delDuration) / ((t_float) x->delDurationNSteps);
-  //x->delDuration = duration;
-  //delay_set_duration(&x->del, duration, x->sampleTime); 
+    post("delayfbck: set delay to %fs", duration);
+    x->delDurationNSteps = (t_int) roundf(delRampTime / x->sampleTime);
+    x->delDurationNSteps = x->delDurationNSteps >= 1 ? x->delDurationNSteps : 1;
+    x->delDurationStep = (duration - x->delDuration) / ((t_float) x->delDurationNSteps);
+    //x->delDuration = duration;
+    //delay_set_duration(&x->del, duration, x->sampleTime); 
 }
 
 
-void set_amplitude_control(t_delayfbck_tilde* x, t_floatarg lpfreq, t_floatarg amplRef, t_floatarg Pgain, t_floatarg Igain)
+void set_amplitude_control(t_delayfbck_tilde* x, t_floatarg lpfreq, t_floatarg amplRef, t_floatarg Pgain, t_floatarg Igain, t_floatarg sat)
 {
-  post("delayfbck: set amplitude controller, lpFreq %2.1f, amplitude %1.2f, P %f, I %g", lpfreq, amplRef, Pgain, Igain);
-  filter_lp1(&x->envelopeFilt, lpfreq, x->sampleTime);
-  t_float sat = 1.0; // TODO
-  picont_init(&x->pic, Pgain, Igain, sat);
-  x->amplitudeRef = amplRef;
+    if (sat <= 0.0) sat = 1.0;
+    post("delayfbck: set amplitude controller, lpFreq %2.1f, amplitude %1.2f, P %f, I %g, Sat %1.2f", lpfreq, amplRef, Pgain, Igain, sat);
+    filter_lp1(&x->envelopeFilt, lpfreq, x->sampleTime);
+    picont_init(&x->pic, Pgain, Igain, sat);
+    x->amplitudeRef = amplRef;
 }
 
 
@@ -474,7 +474,7 @@ void delayfbck_tilde_setup(void) {
         
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_amplitude_control, gensym("ampctrl"),
-        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, 0);
+        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, 0);
         
         
 
