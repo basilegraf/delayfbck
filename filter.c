@@ -70,7 +70,7 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
 // Static gain
 void filter_gain(t_filter* filt, t_float g)
 {
-    filt->type = E_FILTER_GAIN;
+    filt->type = e_filter_gain;
     filt->param[0] = g;
     filt->param[1] = 0.0;
     filt->param[2] = 0.0;
@@ -81,7 +81,7 @@ void filter_gain(t_filter* filt, t_float g)
 // 2nd order lowpass with freq f and damping z
 void filter_lp2(t_filter* filt, t_float f, t_float z, t_float h)
 {
-    filt->type = E_FILTER_LP2;
+    filt->type = e_filter_lp2;
     filt->h = h;
     filt->param[0] = f;
     filt->param[1] = z;
@@ -93,7 +93,7 @@ void filter_lp2(t_filter* filt, t_float f, t_float z, t_float h)
 // 2nd order highpass with freq f, damping z and sample time h
 void filter_hp2(t_filter* filt, t_float f, t_float z, t_float h)
 {
-    filt->type = E_FILTER_HP2;
+    filt->type = e_filter_hp2;
     filt->h = h;
     filt->param[0] = f;
     filt->param[1] = z;
@@ -104,7 +104,7 @@ void filter_hp2(t_filter* filt, t_float f, t_float z, t_float h)
 // 1st order lowpass with cutoff freq f and sample time h
 void filter_lp1(t_filter* filt, t_float f, t_float h)
 {
-    filt->type = E_FILTER_LP1;
+    filt->type = e_filter_lp1;
     filt->h = h;
     filt->param[0] = f;
     filt->param[1] = 0.0;
@@ -115,7 +115,7 @@ void filter_lp1(t_filter* filt, t_float f, t_float h)
 // 1st order highpass with cutoff freq f and sample time h
 void filter_hp1(t_filter* filt, t_float f, t_float h)
 {
-    filt->type = E_FILTER_HP1;
+    filt->type = e_filter_hp1;
     filt->h = h;
     filt->param[0] = f;
     filt->param[1] = 0.0;
@@ -127,7 +127,7 @@ void filter_hp1(t_filter* filt, t_float f, t_float h)
 // Notch filter with frequency f, gain g, bandwidth b and sample time h
 void filter_n(t_filter* filt, t_float f, t_float g, t_float bHz, t_float h)
 {
-    filt->type = E_FILTER_N;
+    filt->type = e_filter_n;
     filt->h = h;
     filt->param[0] = f;
     filt->param[1] = g;
@@ -144,14 +144,14 @@ void filter_x(t_filter* filt)
     t_float f, z, w, hw, hw2, a0i, g, b, bHz, bh, sqg;
     switch(filt->type)
     {
-        case E_FILTER_GAIN:
+        case e_filter_gain:
         // Static gain g
         // param = {g}
             filt->order = 0;
             filt->b[0] = filt->param[0]; // gain g
             break;
 
-        case E_FILTER_LP2:
+        case e_filter_lp2:
         // 2nd order lowpass with freq f and damping z
         // param = {f, z}
             f = filt->param[0];
@@ -169,7 +169,7 @@ void filter_x(t_filter* filt)
             filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));
             break;
 
-        case E_FILTER_HP2:
+        case e_filter_hp2:
         // 2nd order highpass with freq f, damping z
         // param = {f, z}
             f = filt->param[0];
@@ -187,7 +187,7 @@ void filter_x(t_filter* filt)
             filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));
             break;
 
-        case E_FILTER_LP1:
+        case e_filter_lp1:
         // 1st order lowpass with cutoff freq f 
         // param = {f}
             f = filt->param[0];
@@ -201,7 +201,7 @@ void filter_x(t_filter* filt)
             filt->a[0] = a0i * (-2.0 + hw);
             break;
 
-        case E_FILTER_HP1:
+        case e_filter_hp1:
         // 1st order highpass with cutoff freq f 
         // param = {f}
             f = filt->param[0];
@@ -215,7 +215,7 @@ void filter_x(t_filter* filt)
             filt->a[0] = a0i * (-2.0 + hw);
                 break;
 
-        case E_FILTER_N:
+        case e_filter_n:
         // Notch filter with frequency f, gain g, bandwidth b
         // param =  {f, g, bHz}
             f = filt->param[0];

@@ -14,13 +14,13 @@ basile dot graf at a3 dot epfl dot ch
 typedef double t_fsample;
 
 enum e_filter_type {
-    E_FILTER_GAIN = 0,
-    E_FILTER_LP2,
-    E_FILTER_HP2,
-    E_FILTER_LP1,
-    E_FILTER_HP1,
-    E_FILTER_N,
-    E_FILTER_NUM_TYPES
+    e_filter_gain = 0,
+    e_filter_lp2,
+    e_filter_hp2,
+    e_filter_lp1,
+    e_filter_hp1,
+    e_filter_n,
+    e_filter_num_types
 };
 
 typedef struct _filter {
