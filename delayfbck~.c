@@ -320,46 +320,72 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   }
 
   t_int filtNum = atom_getintarg(0, argc, argv);
-  t_symbol* filtType = atom_getsymbolarg(1, argc, argv);
-  t_float filtarg1 = atom_getfloatarg(2, argc, argv);
-  t_float filtarg2 = atom_getfloatarg(3, argc, argv);
+  t_symbol* filtTypeSym = atom_getsymbolarg(1, argc, argv);
+  //t_float filtarg1 = atom_getfloatarg(2, argc, argv);
+  //t_float filtarg2 = atom_getfloatarg(3, argc, argv);
+  enum e_filter_type prevType = x->filters[filtNum].type;
+  
+  
+  t_float filtRampTime = 0.01; // TODO: make as argument somehow?
+  t_float filtargs[MAX_FILTER_NUM_PARAM];
+  for (t_int k=0; k<MAX_FILTER_NUM_PARAM; k++)
+  {
+      filtargs[k] = atom_getfloatarg(k + 2, argc, argv);
+  }
 
   if (filtNum < 0 || filtNum >= MAX_NUM_FILTERS)
   {
     error("delayfbck filter: Filter number out of range 0...%d.", MAX_NUM_FILTERS-1);
   }
   
-  if (filtType == x->sym_g)
+  if (filtTypeSym == x->sym_g)
   {
     post("delayfbck: g");
-    filter_gain(&x->filters[filtNum], filtarg1);
+    x->filters[filtNum].type = e_filter_gain;
   }
-  else if (filtType == x->sym_lp1)
+  else if (filtTypeSym == x->sym_lp1)
   {
     post("delayfbck: lp1");
-    filter_lp1(&x->filters[filtNum], filtarg1, x->sampleTime);
+    x->filters[filtNum].type = e_filter_lp1;
   }
-  else if (filtType == x->sym_hp1)
+  else if (filtTypeSym == x->sym_hp1)
   {
     post("delayfbck: hp1");
-    filter_hp1(&x->filters[filtNum], filtarg1, x->sampleTime);
+    x->filters[filtNum].type = e_filter_hp1;
   }
-  else if (filtType == x->sym_lp2)
+  else if (filtTypeSym == x->sym_lp2)
   {
     post("delayfbck: lp2");
-    filter_lp2(&x->filters[filtNum], filtarg1, filtarg2, x->sampleTime);
+    x->filters[filtNum].type = e_filter_lp2;
   }
-  else if (filtType == x->sym_hp2)
+  else if (filtTypeSym == x->sym_hp2)
   {
     post("delayfbck: hp2");
-    filter_hp2(&x->filters[filtNum], filtarg1, filtarg2, x->sampleTime);
+    x->filters[filtNum].type = e_filter_hp2;
   }
-  else if (filtType == x->sym_n)
+  else if (filtTypeSym == x->sym_n)
   {
     post("delayfbck: n");
-    t_float filtarg3 = atom_getfloatarg(4, argc, argv);
-    filter_n(&x->filters[filtNum], filtarg1, filtarg2, filtarg3, x->sampleTime);
+    x->filters[filtNum].type = e_filter_n;
   }
+  
+  // Ramping steps
+  if (prevType != x->filters[filtNum].type)
+  {
+      // Filter type change, we cannot ramp parameters. Set in one step
+      x->filters[filtNum].n_param_steps = 1;  
+  }
+  else
+  {
+      x->filters[filtNum].n_param_steps = (t_int) roundf(filtRampTime / x->sampleTime);
+      x->filters[filtNum].n_param_steps = x->filters[filtNum].n_param_steps >= 1 ? x->filters[filtNum].n_param_steps : 1;
+  }
+  
+  for (t_int k=0; k<MAX_FILTER_NUM_PARAM; k++)
+  {
+      x->filters[filtNum].param_step[k] =  (filtargs[k] - x->filters[filtNum].param[k]) / ((t_float) x->filters[filtNum].n_param_steps);
+  }
+  x->filters[filtNum].h = x->sampleTime; // TODO ??
 }
 
 

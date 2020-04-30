@@ -26,13 +26,22 @@ void filter_init(t_filter* filt, t_int order)
     filt->n = 0;
     for (int k=0; k<MAX_FILTER_ORDER; k++)
     {
-	filt->b[k] = 0.0;
+        filt->b[k] = 0.0;
         filt->a[k] = 0.0;
         filt->v[k] = 0.0;
     }
     filt->b[0] = 1.0;
     filt->b[MAX_FILTER_ORDER] = 0.0;
     filt->v[MAX_FILTER_ORDER] = 0.0;
+    
+    filt->type = e_filter_num_types; // This corresponds to no actual type => Will prevent ramping at first set
+    filt->h = 1.0 / 44100.0; // TODO ??
+    filt->n_param_steps = 0;
+    for (int k=0; k<MAX_FILTER_NUM_PARAM; k++)
+    {
+        filt->param[k] = 0.0;
+        filt->param_step[k] = 0.0;
+    }
 }
 
 
@@ -45,6 +54,18 @@ void filter_free(t_filter* filt)
 // https://ccrma.stanford.edu/~jos/fp/Direct_Form_II.html
 void filter_step(t_filter* filt, t_float x, t_float* y)
 {
+    // Ramp parameters
+    if (filt->n_param_steps > 0)
+    {
+        for (t_int k = 0; k < MAX_FILTER_NUM_PARAM; k++)
+        {
+            filt->param[k] += filt->param_step[k];
+        }
+        filter_x(filt);
+        filt->n_param_steps--;
+    }
+    
+    // Filter
     t_int ord = filt->order;
     t_int vLen = filt->order + 1;
     t_int n = filt->n;
