@@ -400,10 +400,9 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 }
 
 
-void set_delay(t_delayfbck_tilde* x, t_floatarg duration)
+void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime)
 {
   post("delayfbck: set delay to %fs", duration);
-  t_float delRampTime = 0.01; // TODO: as argument
   x->delDurationNSteps = (t_int) roundf(delRampTime / x->sampleTime);
   x->delDurationNSteps = x->delDurationNSteps >= 1 ? x->delDurationNSteps : 1;
   x->delDurationStep = (duration - x->delDuration) / ((t_float) x->delDurationNSteps);
@@ -445,7 +444,7 @@ void delayfbck_tilde_setup(void) {
 
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_delay, gensym("delay"),
-        A_DEFFLOAT, 0);
+        A_DEFFLOAT, A_DEFFLOAT, 0);
         
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_amplitude_control, gensym("ampctrl"),
