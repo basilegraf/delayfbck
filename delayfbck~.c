@@ -71,6 +71,8 @@ static t_class *delayfbck_tilde_class;
   t_float sampleTime; // elsewhere??
 
   t_float delDuration;
+  t_float delDurationStep;
+  t_int delDurationNSteps;
 
   t_delay del;
   t_nonlin nl;
@@ -120,6 +122,12 @@ t_int *delayfbck_tilde_perform(t_int *w)
   t_float yDel;
   for(i=0; i<n; i++)
     {
+      // Ramp delay duration
+      if (x->delDurationNSteps > 0)
+      {
+          x->delDuration += x->delDurationStep;
+          x->delDurationNSteps--;
+      }
       // Modulate delay duration with second input
       delay_set_duration(&x->del, x->delDuration * (1.0 + in2[i]), x->sampleTime); 
 
@@ -259,6 +267,8 @@ void *delayfbck_tilde_new(t_floatarg f)
   delay_init(&x->del, 44100);
   x->delDuration = 1.0/100.0;
   delay_set_duration(&x->del, 1.0/100.0,  x->sampleTime);
+  x->delDurationStep = 0.0;
+  x->delDurationNSteps = 0;
 
   // Init the nonlinearity
   nonlin_init(&x->nl);
@@ -393,8 +403,12 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 void set_delay(t_delayfbck_tilde* x, t_floatarg duration)
 {
   post("delayfbck: set delay to %fs", duration);
-  x->delDuration = duration;
-  delay_set_duration(&x->del, duration, x->sampleTime); 
+  t_float delRampTime = 0.01; // TODO: as argument
+  x->delDurationNSteps = (t_int) roundf(delRampTime / x->sampleTime);
+  x->delDurationNSteps = x->delDurationNSteps >= 1 ? x->delDurationNSteps : 1;
+  x->delDurationStep = (duration - x->delDuration) / ((t_float) x->delDurationNSteps);
+  //x->delDuration = duration;
+  //delay_set_duration(&x->del, duration, x->sampleTime); 
 }
 
 
