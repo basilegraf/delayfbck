@@ -70,98 +70,176 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
 // Static gain
 void filter_gain(t_filter* filt, t_float g)
 {
-    filt->order = 0;
-    filt->b[0] = g;
+    filt->type = E_FILTER_GAIN;
+    filt->param[0] = g;
+    filt->param[1] = 0.0;
+    filt->param[2] = 0.0;
+    filter_x(filt);
 }
 
 
 // 2nd order lowpass with freq f and damping z
 void filter_lp2(t_filter* filt, t_float f, t_float z, t_float h)
 {
-    filt->order = 2;
-    t_float w = 2.0 * PI * f;
-    t_float hw = h * w;
-    t_float hw2 = hw * hw;
-    t_float a0i = 1.0 / (4.0 + hw * (hw + 4.0*z));
-    filt->b[0] = a0i * hw2;
-    filt->b[1] = 2.0 * filt->b[0];
-    filt->b[2] = filt->b[0];
-
-    filt->a[0] = a0i * (-8.0 + 2.0 * hw2);
-    filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));
+    filt->type = E_FILTER_LP2;
+    filt->h = h;
+    filt->param[0] = f;
+    filt->param[1] = z;
+    filt->param[2] = 0.0;
+    filter_x(filt);
 }
 
 
 // 2nd order highpass with freq f, damping z and sample time h
 void filter_hp2(t_filter* filt, t_float f, t_float z, t_float h)
 {
-    filt->order = 2;
-    t_float w = 2.0 * PI * f;
-    t_float hw = h * w;
-    t_float hw2 = hw * hw;
-    t_float a0i = 1.0 / (4.0 + hw * (hw + 4.0*z));
-    filt->b[0] = a0i * 4.0 ;
-    filt->b[1] = a0i * (-8.0);
-    filt->b[2] = a0i * 4.0 ;
-
-    filt->a[0] = a0i * (-8.0 + 2.0 * hw2);
-    filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));    
+    filt->type = E_FILTER_HP2;
+    filt->h = h;
+    filt->param[0] = f;
+    filt->param[1] = z;
+    filt->param[2] = 0.0;
+    filter_x(filt);   
 }
 
 // 1st order lowpass with cutoff freq f and sample time h
 void filter_lp1(t_filter* filt, t_float f, t_float h)
 {
-    filt->order = 1;
-    t_float w = 2.0 * PI * f;
-    t_float hw = h * w;
-    t_float a0i = 1.0 / (2.0 + hw);
-    filt->b[0] = a0i * hw;
-    filt->b[1] = filt->b[0];
-
-    filt->a[0] = a0i * (-2.0 + hw);
+    filt->type = E_FILTER_LP1;
+    filt->h = h;
+    filt->param[0] = f;
+    filt->param[1] = 0.0;
+    filt->param[2] = 0.0;
+    filter_x(filt);
 }
 
 // 1st order highpass with cutoff freq f and sample time h
 void filter_hp1(t_filter* filt, t_float f, t_float h)
 {
-    filt->order = 1;
-    t_float w = 2.0 * PI * f;
-    t_float hw = h * w;
-    t_float a0i = 1.0 / (2.0 + hw);
-    filt->b[0] = a0i * 2.0;
-    filt->b[1] = -filt->b[0];
-
-    filt->a[0] = a0i * (-2.0 + hw);
+    filt->type = E_FILTER_HP1;
+    filt->h = h;
+    filt->param[0] = f;
+    filt->param[1] = 0.0;
+    filt->param[2] = 0.0;
+    filter_x(filt);
 }
 
 
 // Notch filter with frequency f, gain g, bandwidth b and sample time h
 void filter_n(t_filter* filt, t_float f, t_float g, t_float bHz, t_float h)
 {
-    filt->order = 2;
-    t_float w = 2.0 * PI * f;
-    t_float b = 2.0 * PI * bHz;
-    t_float hw = h * w;
-    t_float hw2 = hw * hw;
-    t_float bh = b * h;
-    t_float sqg = sqrt(g);
-	
-    t_float a0i = 1.0 / (2.0*bh + sqg*(4+hw2));
-
-    filt->b[0] = a0i * sqg * (4.0 + 2.0*b*sqg*h + hw2);
-    filt->b[1] = a0i * 2.0 * sqg *(-4.0 + hw2);
-    filt->b[2] = a0i * sqg * (4.0 - 2.0*b*sqg*h + hw2);
-
-    filt->a[0] = a0i * (2.0*sqg*(-4.0 + hw2));
-    filt->a[1] = a0i * ((-2.0*bh + sqg*(4 + hw2)));
+    filt->type = E_FILTER_N;
+    filt->h = h;
+    filt->param[0] = f;
+    filt->param[1] = g;
+    filt->param[2] = bHz;
+    filter_x(filt);
 }
 
 
-// PI controller 
-void filter_PI(t_filter* filt, t_float kp, t_float ki, t_float h)
+
+
+void filter_x(t_filter* filt)
 {
-    filt->order = 1;
-    filt->b[0] = kp + ki/h;
-    filt->b[1] = -kp;
-    filt->a[0] = -1.0;
+    t_fsample h = filt->h;
+    t_float f, z, w, hw, hw2, a0i, g, b, bHz, bh, sqg;
+    switch(filt->type)
+    {
+        case E_FILTER_GAIN:
+        // Static gain g
+        // param = {g}
+            filt->order = 0;
+            filt->b[0] = filt->param[0]; // gain g
+            break;
+
+        case E_FILTER_LP2:
+        // 2nd order lowpass with freq f and damping z
+        // param = {f, z}
+            f = filt->param[0];
+            z = filt->param[1];
+            filt->order = 2;
+            w = 2.0 * PI * f;
+            hw = h * w;
+            hw2 = hw * hw;
+            a0i = 1.0 / (4.0 + hw * (hw + 4.0*z));
+            filt->b[0] = a0i * hw2;
+            filt->b[1] = 2.0 * filt->b[0];
+            filt->b[2] = filt->b[0];
+
+            filt->a[0] = a0i * (-8.0 + 2.0 * hw2);
+            filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));
+            break;
+
+        case E_FILTER_HP2:
+        // 2nd order highpass with freq f, damping z
+        // param = {f, z}
+            f = filt->param[0];
+            z = filt->param[1];
+            filt->order = 2;
+            w = 2.0 * PI * f;
+            hw = h * w;
+            hw2 = hw * hw;
+            a0i = 1.0 / (4.0 + hw * (hw + 4.0*z));
+            filt->b[0] = a0i * 4.0 ;
+            filt->b[1] = a0i * (-8.0);
+            filt->b[2] = a0i * 4.0 ;
+
+            filt->a[0] = a0i * (-8.0 + 2.0 * hw2);
+            filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));
+            break;
+
+        case E_FILTER_LP1:
+        // 1st order lowpass with cutoff freq f 
+        // param = {f}
+            f = filt->param[0];
+            filt->order = 1;
+            w = 2.0 * PI * f;
+            hw = h * w;
+            a0i = 1.0 / (2.0 + hw);
+            filt->b[0] = a0i * hw;
+            filt->b[1] = filt->b[0];
+
+            filt->a[0] = a0i * (-2.0 + hw);
+            break;
+
+        case E_FILTER_HP1:
+        // 1st order highpass with cutoff freq f 
+        // param = {f}
+            f = filt->param[0];
+            filt->order = 1;
+            w = 2.0 * PI * f;
+            hw = h * w;
+            a0i = 1.0 / (2.0 + hw);
+            filt->b[0] = a0i * 2.0;
+            filt->b[1] = -filt->b[0];
+
+            filt->a[0] = a0i * (-2.0 + hw);
+                break;
+
+        case E_FILTER_N:
+        // Notch filter with frequency f, gain g, bandwidth b
+        // param =  {f, g, bHz}
+            f = filt->param[0];
+            g = filt->param[1];
+            bHz = filt->param[2];
+            filt->order = 2;
+            w = 2.0 * PI * f;
+            b = 2.0 * PI * bHz;
+            hw = h * w;
+            hw2 = hw * hw;
+            bh = b * h;
+            sqg = sqrt(g);
+            
+            a0i = 1.0 / (2.0*bh + sqg*(4+hw2));
+
+            filt->b[0] = a0i * sqg * (4.0 + 2.0*b*sqg*h + hw2);
+            filt->b[1] = a0i * 2.0 * sqg *(-4.0 + hw2);
+            filt->b[2] = a0i * sqg * (4.0 - 2.0*b*sqg*h + hw2);
+
+            filt->a[0] = a0i * (2.0*sqg*(-4.0 + hw2));
+            filt->a[1] = a0i * ((-2.0*bh + sqg*(4 + hw2)));
+            break;
+
+        default:
+          error("filter: Unknown filter type.");
+    }
 }
