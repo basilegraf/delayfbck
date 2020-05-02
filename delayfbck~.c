@@ -284,7 +284,8 @@ void *delayfbck_tilde_new(t_floatarg f)
 //         A_FLOAT A_SYMBOL A_FLOAT          A_FLOAT
 //         int     symbol   float            float
 // Example:
-// "filter 0       lp2      150.0    0.7"
+// "filter 0       lp2      150.0    0.7  0.1"
+// Last optional argument is the ramp time
 void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 {
   //post("delayfbck: filter with %d arguments", argc);
@@ -326,8 +327,8 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   
   
   t_float filtRampTime = 0.05; // TODO: make as argument somehow?
-  t_float filtargs[MAX_FILTER_NUM_PARAM];
-  for (t_int k=0; k<MAX_FILTER_NUM_PARAM; k++)
+  t_float filtargs[MAX_FILTER_NUM_PARAM + 1];  // last arg : ramp time
+  for (t_int k=0; k<MAX_FILTER_NUM_PARAM + 1; k++)
   {
       filtargs[k] = atom_getfloatarg(k + 2, argc, argv);
   }
@@ -342,18 +343,21 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
     //post("delayfbck: g");
     x->filters[filtNum].type = e_filter_gain;
     x->filters[filtNum].param_ramptype[0] = e_ramp_lin;
+    filtRampTime = filtargs[1];
   }
   else if (filtTypeSym == x->sym_lp1)
   {
     //post("delayfbck: lp1");
     x->filters[filtNum].type = e_filter_lp1;
     x->filters[filtNum].param_ramptype[0] = e_ramp_exp;
+    filtRampTime = filtargs[1];
   }
   else if (filtTypeSym == x->sym_hp1)
   {
     //post("delayfbck: hp1");
     x->filters[filtNum].type = e_filter_hp1;
     x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // gain
+    filtRampTime = filtargs[1];
   }
   else if (filtTypeSym == x->sym_lp2)
   {
@@ -361,6 +365,7 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
     x->filters[filtNum].type = e_filter_lp2;
     x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
     x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // damping zeta
+    filtRampTime = filtargs[2];
   }
   else if (filtTypeSym == x->sym_hp2)
   {
@@ -368,6 +373,7 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
     x->filters[filtNum].type = e_filter_hp2;
     x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
     x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // damping zeta
+    filtRampTime = filtargs[2];
   }
   else if (filtTypeSym == x->sym_n)
   {
@@ -375,7 +381,8 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
     x->filters[filtNum].type = e_filter_n;
     x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
     x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // gain
-    x->filters[filtNum].param_ramptype[2] = e_ramp_exp; // bandwidth
+    x->filters[filtNum].param_ramptype[2] = e_ramp_lin; // bandwidth
+    filtRampTime = filtargs[3];
   }
   
   // Ramping steps
@@ -452,7 +459,7 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 
 void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime)
 {
-    post("delayfbck: set delay to %fs", duration);
+    //post("delayfbck: set delay to %fs", duration);
     x->delDurationNSteps = (t_int) roundf(delRampTime / x->sampleTime);
     x->delDurationNSteps = x->delDurationNSteps >= 1 ? x->delDurationNSteps : 1;
     x->delDurationStep = (duration - x->delDuration) / ((t_float) x->delDurationNSteps);
