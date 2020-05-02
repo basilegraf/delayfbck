@@ -439,7 +439,6 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
 
 void set_amplitude_control(t_delayfbck_tilde* x, t_floatarg lpfreq, t_floatarg amplRef, t_floatarg Pgain, t_floatarg Igain, t_floatarg sat)
 {
-    if (sat <= 0.0) sat = 1.0;
     post("delayfbck: set amplitude controller, lpFreq %2.1f, amplitude %1.2f, P %f, I %g, Sat %1.2f", lpfreq, amplRef, Pgain, Igain, sat);
     filter_lp1(&x->envelopeFilt, lpfreq, x->sampleTime);
     picont_init(&x->pic, Pgain, Igain, sat);
