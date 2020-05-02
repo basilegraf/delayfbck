@@ -281,18 +281,17 @@ void *delayfbck_tilde_new(t_floatarg f)
 // Set filter
 // Message format:
 // "filter filtNum filtType floatArg1 , ..., floatArgn"
-//         A_FLOAT A_SYMBOL A_SYMBOL         A_SYMBOL
+//         A_FLOAT A_SYMBOL A_FLOAT          A_FLOAT
 //         int     symbol   float            float
 // Example:
 // "filter 0       lp2      150.0    0.7"
 void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 {
-// TODO ! But the method is called properly now !
-  post("delayfbck: filter with %d arguments", argc);
-  for (int k=0; k<argc; k++)
-  {
-      post("delayfbck filter: argc %d type = %d", k, argv[k].a_type);
-  }
+  //post("delayfbck: filter with %d arguments", argc);
+  //for (int k=0; k<argc; k++)
+  //{
+  //    post("delayfbck filter: argc %d type = %d", k, argv[k].a_type);
+  //}
   if (argc < 3)
   {
     error("delayfbck filter: Too few arguments.");
@@ -326,7 +325,7 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   enum e_filter_type prevType = x->filters[filtNum].type;
   
   
-  t_float filtRampTime = 0.01; // TODO: make as argument somehow?
+  t_float filtRampTime = 0.05; // TODO: make as argument somehow?
   t_float filtargs[MAX_FILTER_NUM_PARAM];
   for (t_int k=0; k<MAX_FILTER_NUM_PARAM; k++)
   {
@@ -340,33 +339,43 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   
   if (filtTypeSym == x->sym_g)
   {
-    post("delayfbck: g");
+    //post("delayfbck: g");
     x->filters[filtNum].type = e_filter_gain;
+    x->filters[filtNum].param_ramptype[0] = e_ramp_lin;
   }
   else if (filtTypeSym == x->sym_lp1)
   {
-    post("delayfbck: lp1");
+    //post("delayfbck: lp1");
     x->filters[filtNum].type = e_filter_lp1;
+    x->filters[filtNum].param_ramptype[0] = e_ramp_exp;
   }
   else if (filtTypeSym == x->sym_hp1)
   {
-    post("delayfbck: hp1");
+    //post("delayfbck: hp1");
     x->filters[filtNum].type = e_filter_hp1;
+    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // gain
   }
   else if (filtTypeSym == x->sym_lp2)
   {
-    post("delayfbck: lp2");
+    //post("delayfbck: lp2");
     x->filters[filtNum].type = e_filter_lp2;
+    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
+    x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // damping zeta
   }
   else if (filtTypeSym == x->sym_hp2)
   {
-    post("delayfbck: hp2");
+    //post("delayfbck: hp2");
     x->filters[filtNum].type = e_filter_hp2;
+    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
+    x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // damping zeta
   }
   else if (filtTypeSym == x->sym_n)
   {
-    post("delayfbck: n");
+    //post("delayfbck: n");
     x->filters[filtNum].type = e_filter_n;
+    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
+    x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // gain
+    x->filters[filtNum].param_ramptype[2] = e_ramp_exp; // bandwidth
   }
   
   // Ramping steps
@@ -380,10 +389,25 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
       x->filters[filtNum].n_param_steps = (t_int) roundf(filtRampTime / x->sampleTime);
       x->filters[filtNum].n_param_steps = x->filters[filtNum].n_param_steps >= 1 ? x->filters[filtNum].n_param_steps : 1;
   }
+
   
   for (t_int k=0; k<MAX_FILTER_NUM_PARAM; k++)
   {
-      x->filters[filtNum].param_step[k] =  (filtargs[k] - x->filters[filtNum].param[k]) / ((t_float) x->filters[filtNum].n_param_steps);
+      x->filters[filtNum].param_target[k] = filtargs[k];
+      switch (x->filters[filtNum].param_ramptype[k])
+      {
+          case e_ramp_lin:
+            x->filters[filtNum].param_step[k] =  (filtargs[k] - x->filters[filtNum].param[k]) / ((t_float) x->filters[filtNum].n_param_steps);
+            break;
+          
+          case e_ramp_exp:
+            x->filters[filtNum].param_step[k] =  powf(filtargs[k] / x->filters[filtNum].param[k] , 1.0 / ((t_float) x->filters[filtNum].n_param_steps));
+            break;
+          
+          default:
+            error("Undefined ramp type.");
+      }
+      
   }
   x->filters[filtNum].h = x->sampleTime; // TODO ??
 }

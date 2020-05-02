@@ -41,6 +41,8 @@ void filter_init(t_filter* filt, t_int order)
     {
         filt->param[k] = 0.0;
         filt->param_step[k] = 0.0;
+        filt->param_target[k] = 0.0;
+        filt->param_ramptype[k] = e_ramp_lin;
     }
 }
 
@@ -54,12 +56,29 @@ void filter_free(t_filter* filt)
 // https://ccrma.stanford.edu/~jos/fp/Direct_Form_II.html
 void filter_step(t_filter* filt, t_float x, t_float* y)
 {
-    // Ramp parameters
-    if (filt->n_param_steps > 0)
+    // Ramp parameters linearly or exponentially
+    if (filt->n_param_steps == 1)
     {
         for (t_int k = 0; k < MAX_FILTER_NUM_PARAM; k++)
         {
-            filt->param[k] += filt->param_step[k];
+            filt->param[k] = filt->param_target[k];
+        }
+        filter_x(filt);
+        filt->n_param_steps = 0;
+    }
+    else if (filt->n_param_steps > 1)
+    {
+        for (t_int k = 0; k < MAX_FILTER_NUM_PARAM; k++)
+        {
+            if (filt->param_ramptype == e_ramp_lin)
+            {
+                filt->param[k] += filt->param_step[k];
+            }
+            else
+            { // e_ramp_exp
+                filt->param[k] *= filt->param_step[k];
+            }
+            
         }
         filter_x(filt);
         filt->n_param_steps--;

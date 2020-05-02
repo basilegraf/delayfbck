@@ -23,6 +23,11 @@ enum e_filter_type {
     e_filter_num_types
 };
 
+enum e_ramp_type {
+    e_ramp_lin,
+    e_ramp_exp
+};
+
 typedef struct _filter {
     t_int order, n;
     t_fsample b[MAX_FILTER_ORDER+1];	// nuemrator (b coeffs) , size order+1
@@ -34,6 +39,8 @@ typedef struct _filter {
     t_int n_param_steps;
     t_fsample param[MAX_FILTER_NUM_PARAM];
     t_fsample param_step[MAX_FILTER_NUM_PARAM];
+    t_fsample param_target[MAX_FILTER_NUM_PARAM]; // Used to relpace last step in case of inaccurate ramping
+    enum e_ramp_type param_ramptype[MAX_FILTER_NUM_PARAM];
 } t_filter;
 
 
