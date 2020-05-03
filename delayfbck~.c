@@ -457,40 +457,46 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 }
 
 
-void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime)
+void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect)
 {
+    // If desired, take phase of filters and nonlin gain at frequency 1/duration into account 
+    if (pitchCorrect > 0.0)
+    {
+        // Compute phase of all filters
+        t_float mag = 1.0;
+        t_float phase =0.0;
+        t_float fNorm = x->sampleTime / duration;
+        t_float magk, phasek;
+        for (t_int k=0; k<MAX_NUM_FILTERS; k++)
+        {
+            filter_bode(&x->filters[k],  fNorm, &magk, &phasek);
+            mag *= magk;
+            phase += phasek;
+        }
+        post("-");
+        // Add mag and phase of non-linearity
+        mag *= fabs(x->nl.gain);
+        if (x->nl.gain < 0.0)
+        {
+            phase += PI;
+        }
+        if (phase > PI)
+        {
+            phase -= PI;
+        } 
+        post("Filters phase = %g, mag=%g", 180.0 * phase / PI, mag);
+        
+        duration += phase * duration / TWOPI;
+    }
+    
+    
+    // Update delay length
     //post("delayfbck: set delay to %fs", duration);
     x->delDurationNSteps = (t_int) roundf(delRampTime / x->sampleTime);
     x->delDurationNSteps = x->delDurationNSteps >= 1 ? x->delDurationNSteps : 1;
     x->delDurationStep = (duration - x->delDuration) / ((t_float) x->delDurationNSteps);
     //x->delDuration = duration;
     //delay_set_duration(&x->del, duration, x->sampleTime); 
-    
-    // Compute phase of all filters
-    t_float mag = 1.0;
-    t_float phase =0.0;
-    t_float fNorm = x->sampleTime / duration; // TODO
-    t_float magk, phasek;
-    for (t_int k=0; k<MAX_NUM_FILTERS; k++)
-    {
-        filter_bode(&x->filters[k],  fNorm, &magk, &phasek);
-        mag *= magk;
-        phase += phasek;
-        post("Filters phase = %g, mag=%g", 180.0 * phasek / PI, magk);
-    }
-    post("-");
-    // Add mag and phase of non-linearity
-    mag *= fabs(x->nl.gain);
-    if (x->nl.gain < 0.0)
-    {
-        phase += PI;
-    }
-    if (phase > PI)
-    {
-        phase -= PI;
-    } 
-    // [-PI,PI] -> [0, 2PI]
-    phase += PI;
 }
 
 
@@ -526,7 +532,7 @@ void delayfbck_tilde_setup(void) {
 
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_delay, gensym("delay"),
-        A_DEFFLOAT, A_DEFFLOAT, 0);
+        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, 0);
         
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_amplitude_control, gensym("ampctrl"),
