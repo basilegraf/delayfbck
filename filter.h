@@ -10,6 +10,7 @@ basile dot graf at a3 dot epfl dot ch
 #define MAX_FILTER_ORDER 5  // Should be minimum 2
 #define MAX_FILTER_NUM_PARAM 3  
 #define PI 3.14159265358979324
+#define TWOPI 6.28318530718
 
 typedef double t_fsample;
 
@@ -65,6 +66,9 @@ void filter_hp1(t_filter* filt, t_float f, t_float h);
 void filter_n(t_filter* filt, t_float f, t_float g, t_float b, t_float h);
 
 void filter_x(t_filter* filt);
+
+// Bode of a filter filt transfer function, evaluated at normalized frequency f = freq/fsampling in [0, 1]
+void filter_bode(t_filter* filt,  t_float f, t_float* mag, t_float* phase);
 
 
 #endif /* _FILTER_H_ */

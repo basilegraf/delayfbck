@@ -8,7 +8,7 @@ basile dot graf at a3 dot epfl dot ch
 #include <stdio.h>     
 #include <stdlib.h>     
 #include <math.h>
-
+#include <stdbool.h> // _Bool
 
 
 
@@ -282,4 +282,48 @@ void filter_x(t_filter* filt)
         default:
           error("filter: Unknown filter type.");
     }
+}
+
+
+// Bode of a polynomial c transfer function of degree n, evaluated at normalized frequency f = freq/fsampling in [0, 1]
+// c order is descending powers
+// If hasLead is flase, n+1 values are taken from c[]
+// If hasLead is true, the polynomial is prepended with 1.0 and only n values are taken from c[]
+void polynom_bode(t_fsample* c, t_int n,  t_float f, bool hasLead, t_float* mag, t_float* phase)
+{
+    t_float w = TWOPI * f;
+    t_float real = 0.0;
+    t_float imag = 0.0;
+    if (hasLead)
+    {
+        real = cosf(((t_float)(n)) * w);
+        imag = sinf(((t_float)(n)) * w);
+        for (t_int k=0; k<n; k++)
+        {
+            real += c[k] * cosf(((t_float)(n-k-1)) * w);
+            imag += c[k] * sinf(((t_float)(n-k-1)) * w);
+        }
+    }
+    else
+    {
+        for (t_int k=0; k<=n; k++)
+        {
+            real += c[k] * cosf(((t_float)(n-k)) * w);
+            imag += c[k] * sinf(((t_float)(n-k)) * w);
+        }
+    }    
+    *mag = sqrtf(real*real + imag*imag);
+    *phase = atan2f(imag, real);
+}
+
+
+// Bode of a filter filt transfer function, evaluated at normalized frequency f = freq/fsampling in [0, 1]
+void filter_bode(t_filter* filt,  t_float f, t_float* mag, t_float* phase)
+{
+    t_float magNum, magDen, phaseNum, phaseDen;
+
+    polynom_bode(filt->b, filt->order, f, false, &magNum, &phaseNum);
+    polynom_bode(filt->a, filt->order, f, true, &magDen, &phaseDen);
+    *mag = magNum / magDen;
+    *phase = phaseNum - phaseDen;
 }

@@ -465,6 +465,32 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
     x->delDurationStep = (duration - x->delDuration) / ((t_float) x->delDurationNSteps);
     //x->delDuration = duration;
     //delay_set_duration(&x->del, duration, x->sampleTime); 
+    
+    // Compute phase of all filters
+    t_float mag = 1.0;
+    t_float phase =0.0;
+    t_float fNorm = x->sampleTime / duration; // TODO
+    t_float magk, phasek;
+    for (t_int k=0; k<MAX_NUM_FILTERS; k++)
+    {
+        filter_bode(&x->filters[k],  fNorm, &magk, &phasek);
+        mag *= magk;
+        phase += phasek;
+        post("Filters phase = %g, mag=%g", 180.0 * phasek / PI, magk);
+    }
+    post("-");
+    // Add mag and phase of non-linearity
+    mag *= fabs(x->nl.gain);
+    if (x->nl.gain < 0.0)
+    {
+        phase += PI;
+    }
+    if (phase > PI)
+    {
+        phase -= PI;
+    } 
+    // [-PI,PI] -> [0, 2PI]
+    phase += PI;
 }
 
 
