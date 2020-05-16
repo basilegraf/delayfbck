@@ -9,6 +9,7 @@ For now, `delayfbck` includes:
 2. Feedback with saturations and settable filters
 3. Envelope detector: A rectifier and lowpass allows to measure the resonance amplitude
 4. Amplitude controller: The feeback gain can be continuousely adjusted by a proportional-integral controller. This allows to stabilize the resonnance without necessarily hitting too hard in the saturation 
+5. Pitch correction: the delay length can be corrected by taking the filters phase at the expected resonance frequency into account. This allows to create the really intended pitch. Works well on high pitches, not so well on lowe pitches for some reasons.
 
 ![](delayfbck-screenshot.png)
 
