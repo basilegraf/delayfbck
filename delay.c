@@ -37,6 +37,12 @@ void delay_init(t_delay* del, t_int maxLength)
         error("delay: memory alloc failed!");
     }
     delay_reset(del);
+    // Plucked string
+    del->plk_state = e_pluck_idle;
+    del->plk_amplitude = 0.0f;
+    del->plk_rising_step = 0.0f;
+    del->plk_falling_step = 0.0f;
+    del->plk_value = 0.0f;
 }
 
 // Free/deallocate delay memory
@@ -92,9 +98,66 @@ void delay_read(t_delay* del, t_float* y)
     *y = (1.0f - del->decimal) * tapn + del->decimal * tapn1;
 }
 
-// increment index
+
 void delay_step(t_delay* del)
 {
+    
+    
+    // plucked string   
+    switch (del->plk_state)
+    {
+        case e_pluck_rising:
+            del->plk_value += del->plk_rising_step;
+            if (del->plk_value >= del->plk_amplitude)
+            {
+                del->plk_value = del->plk_amplitude;
+                del->plk_state = e_pluck_falling;
+            }
+            del->v[del->n] += del->plk_value;
+        break;
+        case e_pluck_falling:
+            del->plk_value -= del->plk_falling_step;
+            if (del->plk_value <= 0.0f)
+            {
+                del->plk_value = 0.0f;
+                del->plk_state = e_pluck_idle;
+            }
+            del->v[del->n] += del->plk_value;
+        break;
+        case e_pluck_idle:
+            // nothing
+        break;
+    }
+    
+    // increment index
     del->n = (del->n + 1)  % del->maxLength;
 }
 
+
+// pluck string à la Karplus-Strong with amplitude ampl at position 0.0 <= pos <= 1.0
+void delay_pluck_string(t_delay* del, t_float ampl, t_float pos)
+{
+     t_float L = del->decimal + (t_float) del->integer;
+     pos = pos >= 0.0f ? pos : 0.0f;
+     pos = pos <= 1.0f ? pos : 1.0f;
+     pos *= L; // pluck position in samples
+     if (pos > 0.0f)
+     {
+         del->plk_rising_step = ampl / pos;
+     }
+     else
+     {
+         del->plk_rising_step = ampl;
+     }
+     pos = L - pos;
+     if (pos > 0.0f)
+     {
+         del->plk_falling_step = ampl / pos;
+     }
+     else
+     {
+         del->plk_falling_step = ampl;
+     }
+     del->plk_amplitude = ampl;
+     del->plk_state = e_pluck_rising;
+}

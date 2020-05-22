@@ -10,12 +10,24 @@ basile dot graf at a3 dot epfl dot ch
 
 #define PI 3.14159265358979324
 
+enum e_pluck_state {
+    e_pluck_idle,
+    e_pluck_rising,
+    e_pluck_falling
+};
 
 typedef struct _delay {
     t_int maxLength, n;	// Allocated length, current index
     t_int integer;	// Integer part f the delay 0 <= integer < maxLength
     t_float decimal;	// Decimal part of the delay 0.0 <= decimal <= 1.0
     t_float* v; 	// state, dynamic alloc
+    // Variables for "plucked string"
+    enum e_pluck_state plk_state;
+    t_float plk_amplitude;
+    t_float plk_rising_step;
+    t_float plk_falling_step;
+    t_float plk_value;
+    
 } t_delay;
 
 
@@ -36,5 +48,8 @@ void delay_read(t_delay* del, t_float* y);
 void delay_step(t_delay* del);
 
 void delay_print(t_delay* del);
+
+// pluck string à la Karplus-Strong with amplitude ampl at position 0.0 <= pos <= 1.0
+void delay_pluck_string(t_delay* del, t_float ampl, t_float pos);
 
 #endif /* _DELAY_H_ */

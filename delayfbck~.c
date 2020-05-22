@@ -56,6 +56,9 @@ static t_class *delayfbck_tilde_class;
   t_symbol* sym_asymmetric_sat;
   t_symbol* sym_symmetric_sigmoid;
   t_symbol* sym_asymmetric_sigmoid;
+  
+  // Create symbol for plucked string
+  t_symbol* sym_pluck;
 
   // Filter array
   t_filter filters[MAX_NUM_FILTERS];
@@ -509,6 +512,13 @@ void set_amplitude_control(t_delayfbck_tilde* x, t_floatarg lpfreq, t_floatarg a
 }
 
 
+void set_pluck_string(t_delayfbck_tilde* x, t_floatarg ampl, t_floatarg pos)
+{
+    post("delayfbck: pluck string, amplitude %2.1f, position %2.1f", ampl, pos);
+    delay_pluck_string(&x->del, ampl, pos);
+}
+
+
 /**
  * define the function-space of the class
  * within a single-object external the name of this function is very special
@@ -537,6 +547,11 @@ void delayfbck_tilde_setup(void) {
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_amplitude_control, gensym("ampctrl"),
         A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, 0);
+        
+    
+  class_addmethod(delayfbck_tilde_class,
+        (t_method)set_pluck_string, gensym("pluck"),
+        A_DEFFLOAT, A_DEFFLOAT, 0);
         
         
 
