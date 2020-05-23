@@ -75,14 +75,14 @@ del1.hp1(0, 10)
 del2.hp1(0, 10)
 del3.hp1(0, 10)
 
-del1.lp1(1, 500)
-del2.lp1(1, 1000)
-del3.lp1(1, 1000)
+del1.lp1(1, 1500)
+del2.lp1(1, 2000)
+del3.lp1(1, 3000)
 
 
-del1.note(30)
-del2.note(36)
-del3.note(40)
+del1.note(32+24)
+del2.note(36+24)
+del3.note(39+24)
 
 del1.delay(0.4)
 del2.delay(0.2)
