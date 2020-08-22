@@ -1,0 +1,649 @@
+#N canvas 284 205 1717 858 10;
+#X text 123 644 audio output;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X array DelayLineOut 500 float 3;
+#A 0 0.296831 0.29764 0.298693 0.299975 0.301454 0.303108 0.304934
+0.306889 0.308958 0.311135 0.3134 0.315742 0.318147 0.320584 0.32306
+0.325555 0.328052 0.33055 0.333028 0.335461 0.337871 0.340331 0.343041
+0.346089 0.349463 0.353189 0.357108 0.361035 0.364965 0.368906 0.372846
+0.376827 0.380864 0.384939 0.389094 0.393308 0.397605 0.402001 0.406471
+0.411045 0.415722 0.420493 0.425365 0.430339 0.435413 0.440585 0.445843
+0.451189 0.456625 0.462153 0.467743 0.473411 0.479158 0.484954 0.490822
+0.496724 0.502694 0.508693 0.514742 0.520817 0.526927 0.533102 0.539541
+0.546397 0.55365 0.561289 0.569319 0.577724 0.586479 0.595589 0.605036
+0.614802 0.624866 0.635224 0.645844 0.656709 0.667816 0.679124 0.690623
+0.702304 0.714125 0.726084 0.738138 0.750287 0.762494 0.774753 0.787042
+0.799346 0.811638 0.823917 0.836166 0.848362 0.86049 0.872571 0.884559
+0.89646 0.90828 0.919979 0.931586 0.943081 0.954462 0.96573 0.97687
+0.987895 0.998796 1.00957 1.02023 1.03075 1.04115 1.05141 1.06156 1.07159
+1.08146 1.09122 1.10085 1.11035 1.1197 1.12892 1.13801 1.14695 1.15575
+1.16438 1.17288 1.18122 1.18939 1.19741 1.20522 1.21286 1.22032 1.22756
+1.23459 1.24141 1.24798 1.25432 1.26039 1.26619 1.27172 1.27693 1.28184
+1.28643 1.29067 1.29455 1.29808 1.3012 1.30396 1.30626 1.30816 1.30962
+1.31061 1.31115 1.3112 1.31077 1.30982 1.30834 1.30636 1.30382 1.30074
+1.2971 1.2929 1.28812 1.28275 1.27681 1.27026 1.26311 1.25538 1.24703
+1.23809 1.22854 1.21837 1.20761 1.19623 1.18426 1.17169 1.1585 1.14475
+1.13037 1.11543 1.09989 1.0838 1.06712 1.04988 1.03208 1.01373 0.994846
+0.975391 0.955432 0.934932 0.913899 0.892358 0.870308 0.847734 0.824653
+0.801092 0.777014 0.75243 0.727349 0.701772 0.67567 0.649072 0.621944
+0.594297 0.566091 0.537338 0.508021 0.478124 0.447635 0.416518 0.384754
+0.352307 0.319186 0.285345 0.250766 0.215417 0.179265 0.142294 0.104461
+0.0657306 0.0260985 -0.0144988 -0.0560777 -0.0986671 -0.142309 -0.187062
+-0.232946 -0.280061 -0.328508 -0.37836 -0.429799 -0.482986 -0.538123
+-0.595454 -0.65514 -0.717075 -0.779743 -0.841387 -0.901629 -0.96037
+-1.01757 -1.07322 -1.12728 -1.17976 -1.23064 -1.27995 -1.3275 -1.37315
+-1.41698 -1.45911 -1.49965 -1.53868 -1.57633 -1.61265 -1.64779 -1.6818
+-1.71481 -1.74686 -1.77805 -1.80846 -1.83817 -1.86708 -1.89506 -1.9221
+-1.94828 -1.97365 -1.99823 -2.02212 -2.04532 -2.0679 -2.08991 -2.11138
+-2.13237 -2.15291 -2.17305 -2.19281 -2.21225 -2.23137 -2.25024 -2.26887
+-2.28729 -2.30553 -2.32358 -2.34147 -2.35921 -2.3768 -2.39422 -2.41147
+-2.42853 -2.4454 -2.46208 -2.47852 -2.49474 -2.51069 -2.52613 -2.5405
+-2.55353 -2.56525 -2.57572 -2.58499 -2.59311 -2.60014 -2.60611 -2.6111
+-2.61512 -2.61824 -2.62051 -2.62195 -2.62262 -2.62257 -2.62183 -2.62042
+-2.6184 -2.61578 -2.61261 -2.60889 -2.60464 -2.5999 -2.59469 -2.589
+-2.58287 -2.57627 -2.56924 -2.5618 -2.5539 -2.54558 -2.53685 -2.52768
+-2.5181 -2.50808 -2.49764 -2.48676 -2.47548 -2.46376 -2.45159 -2.439
+-2.42597 -2.41251 -2.39861 -2.38429 -2.36952 -2.35433 -2.33871 -2.32266
+-2.30619 -2.2893 -2.272 -2.25429 -2.23618 -2.21768 -2.19878 -2.1795
+-2.15985 -2.13983 -2.11944 -2.09871 -2.07762 -2.0562 -2.03446 -2.01238
+-1.98999 -1.9673 -1.9443 -1.921 -1.89742 -1.87355 -1.84941 -1.825 -1.8003
+-1.77536 -1.75015 -1.72466 -1.69891 -1.67291 -1.64664 -1.62011 -1.59332
+-1.56624 -1.53889 -1.51125 -1.48333 -1.45512 -1.42659 -1.39775 -1.36855
+-1.33904 -1.30914 -1.27888 -1.24821 -1.21712 -1.18557 -1.15355 -1.12101
+-1.08792 -1.05424 -1.01993 -0.984962 -0.9493 -0.91293 -0.875819 -0.837929
+-0.799249 -0.759752 -0.719389 -0.678177 -0.636056 -0.593037 -0.549083
+-0.504189 -0.458348 -0.411531 -0.363785 -0.315093 -0.265506 -0.215041
+-0.163782 -0.111756 -0.0590691 -0.00581886 0.0478994 0.101967 0.156271
+0.21066 0.265012 0.319173 0.373006 0.426419 0.479279 0.531501 0.582995
+0.633651 0.683369 0.731753 0.778561 0.823864 0.867665 0.91007 0.951106
+0.990794 1.02922 1.06637 1.1023 1.13705 1.17063 1.20307 1.23423 1.26386
+1.2919 1.31831 1.34315 1.36637 1.38804 1.40814 1.42669 1.44371 1.45922
+1.47325 1.48581 1.49693 1.50663 1.51492 1.52184 1.52741 1.53167 1.53463
+1.53633 1.53679 1.53603 1.53411 1.53103 1.52683 1.52158 1.51526 1.50794
+1.49966 1.49047 1.48078 1.47108 1.46156 1.4522 1.44298 1.43388 1.42488
+1.41598 1.40718 1.39846 1.3898 1.38122 1.37272 1.36426 1.35587 1.34755
+1.33927 1.33107 1.32292 1.31484 1.3068 1.29884 1.29093 1.28311 1.27535
+1.26766 1.26006;
+#X coords 0 1 500 -1 200 140 1 0 0;
+#X restore 343 657 graph;
+#X obj 33 257 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 97 59 noise~;
+#X obj 97 154 *~;
+#X obj 141 122 line~;
+#X msg 141 61 0.1 100;
+#X msg 147 93 0 100;
+#X text 197 59 on;
+#X obj 147 549 *~;
+#X obj 171 521 line~;
+#X msg 190 490 0 100;
+#X text 242 453 on;
+#X text 239 489 off;
+#X text 228 518 envelope;
+#X text 228 531 generator;
+#X text 155 433 amplitude controls:;
+#X obj 147 549 *~;
+#X obj 171 521 line~;
+#X msg 190 490 0 100;
+#X text 242 453 on;
+#X text 239 489 off;
+#X text 228 518 envelope;
+#X text 228 531 generator;
+#X text 155 433 amplitude controls:;
+#X obj 287 60 bng 15 250 50 0 empty empty empty 0 -6 0 8 -262144 -1
+-1;
+#N canvas 379 254 494 344 META 0;
+#X text 12 165 HELP_PATCH_AUTHORS "pd meta" information added by Jonathan
+Wilkes for Pd version 0.42.;
+#X text 12 45 DESCRIPTION exponential attack/decay envelope;
+#X text 12 5 KEYWORDS signal ramp;
+#X text 12 85 INLET_1 float;
+#X text 12 65 INLET_0 bang;
+#X text 12 105 INLET_2 float;
+#X text 12 125 OUTLET_0 signal;
+#X text 12 25 LICENSE GPL v2;
+#X text 12 145 AUTHOR Tom Schouten <tom@zwizwa.be>;
+#X restore 7 33 pd META;
+#X obj 246 86 creb;
+#X obj 226 211 receive delaypar;
+#X floatatom 850 336 5 1 1000 0 - - -, f 5;
+#X floatatom 645 341 5 1 10000 0 - - -, f 5;
+#X obj 34 229 metro 150;
+#X obj 396 344 *~;
+#X obj 409 259 line~;
+#X msg 425 231 0 100;
+#X obj 397 179 osc~ 100;
+#X msg 409 106 30;
+#X floatatom 409 129 5 0 0 0 - - -, f 5;
+#X obj 409 151 mtof;
+#X obj 176 621 dac~ 2;
+#X obj 125 620 dac~ 1;
+#X msg 411 208 0.05 100;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X array EnvelopeAmplitude 500 float 3;
+#A 0 0.296831 0.29764 0.298693 0.299975 0.301454 0.303108 0.304934
+0.306889 0.308958 0.311135 0.3134 0.315742 0.318147 0.320584 0.32306
+0.325555 0.328052 0.33055 0.333028 0.335461 0.337871 0.340331 0.343041
+0.346089 0.349463 0.353189 0.357108 0.361035 0.364965 0.368906 0.372846
+0.376827 0.380864 0.384939 0.389094 0.393308 0.397605 0.402001 0.406471
+0.411045 0.415722 0.420493 0.425365 0.430339 0.435413 0.440585 0.445843
+0.451189 0.456625 0.462153 0.467743 0.473411 0.479158 0.484954 0.490822
+0.496724 0.502694 0.508693 0.514742 0.520817 0.526927 0.533102 0.539541
+0.546397 0.55365 0.561289 0.569319 0.577724 0.586479 0.595589 0.605036
+0.614802 0.624866 0.635224 0.645844 0.656709 0.667816 0.679124 0.690623
+0.702304 0.714125 0.726084 0.738138 0.750287 0.762494 0.774753 0.787042
+0.799346 0.811638 0.823917 0.836166 0.848362 0.86049 0.872571 0.884559
+0.89646 0.90828 0.919979 0.931586 0.943081 0.954462 0.96573 0.97687
+0.987895 0.998796 1.00957 1.02023 1.03075 1.04115 1.05141 1.06156 1.07159
+1.08146 1.09122 1.10085 1.11035 1.1197 1.12892 1.13801 1.14695 1.15575
+1.16438 1.17288 1.18122 1.18939 1.19741 1.20522 1.21286 1.22032 1.22756
+1.23459 1.24141 1.24798 1.25432 1.26039 1.26619 1.27172 1.27693 1.28184
+1.28643 1.29067 1.29455 1.29808 1.3012 1.30396 1.30626 1.30816 1.30962
+1.31061 1.31115 1.3112 1.31077 1.30982 1.30834 1.30636 1.30382 1.30074
+1.2971 1.2929 1.28812 1.28275 1.27681 1.27026 1.26311 1.25538 1.24703
+1.23809 1.22854 1.21837 1.20761 1.19623 1.18426 1.17169 1.1585 1.14475
+1.13037 1.11543 1.09989 1.0838 1.06712 1.04988 1.03208 1.01373 0.994846
+0.975391 0.955432 0.934932 0.913899 0.892358 0.870308 0.847734 0.824653
+0.801092 0.777014 0.75243 0.727349 0.701772 0.67567 0.649072 0.621944
+0.594297 0.566091 0.537338 0.508021 0.478124 0.447635 0.416518 0.384754
+0.352307 0.319186 0.285345 0.250766 0.215417 0.179265 0.142294 0.104461
+0.0657306 0.0260985 -0.0144988 -0.0560777 -0.0986671 -0.142309 -0.187062
+-0.232946 -0.280061 -0.328508 -0.37836 -0.429799 -0.482986 -0.538123
+-0.595454 -0.65514 -0.717075 -0.779743 -0.841387 -0.901629 -0.96037
+-1.01757 -1.07322 -1.12728 -1.17976 -1.23064 -1.27995 -1.3275 -1.37315
+-1.41698 -1.45911 -1.49965 -1.53868 -1.57633 -1.61265 -1.64779 -1.6818
+-1.71481 -1.74686 -1.77805 -1.80846 -1.83817 -1.86708 -1.89506 -1.9221
+-1.94828 -1.97365 -1.99823 -2.02212 -2.04532 -2.0679 -2.08991 -2.11138
+-2.13237 -2.15291 -2.17305 -2.19281 -2.21225 -2.23137 -2.25024 -2.26887
+-2.28729 -2.30553 -2.32358 -2.34147 -2.35921 -2.3768 -2.39422 -2.41147
+-2.42853 -2.4454 -2.46208 -2.47852 -2.49474 -2.51069 -2.52613 -2.5405
+-2.55353 -2.56525 -2.57572 -2.58499 -2.59311 -2.60014 -2.60611 -2.6111
+-2.61512 -2.61824 -2.62051 -2.62195 -2.62262 -2.62257 -2.62183 -2.62042
+-2.6184 -2.61578 -2.61261 -2.60889 -2.60464 -2.5999 -2.59469 -2.589
+-2.58287 -2.57627 -2.56924 -2.5618 -2.5539 -2.54558 -2.53685 -2.52768
+-2.5181 -2.50808 -2.49764 -2.48676 -2.47548 -2.46376 -2.45159 -2.439
+-2.42597 -2.41251 -2.39861 -2.38429 -2.36952 -2.35433 -2.33871 -2.32266
+-2.30619 -2.2893 -2.272 -2.25429 -2.23618 -2.21768 -2.19878 -2.1795
+-2.15985 -2.13983 -2.11944 -2.09871 -2.07762 -2.0562 -2.03446 -2.01238
+-1.98999 -1.9673 -1.9443 -1.921 -1.89742 -1.87355 -1.84941 -1.825 -1.8003
+-1.77536 -1.75015 -1.72466 -1.69891 -1.67291 -1.64664 -1.62011 -1.59332
+-1.56624 -1.53889 -1.51125 -1.48333 -1.45512 -1.42659 -1.39775 -1.36855
+-1.33904 -1.30914 -1.27888 -1.24821 -1.21712 -1.18557 -1.15355 -1.12101
+-1.08792 -1.05424 -1.01993 -0.984962 -0.9493 -0.91293 -0.875819 -0.837929
+-0.799249 -0.759752 -0.719389 -0.678177 -0.636056 -0.593037 -0.549083
+-0.504189 -0.458348 -0.411531 -0.363785 -0.315093 -0.265506 -0.215041
+-0.163782 -0.111756 -0.0590691 -0.00581886 0.0478994 0.101967 0.156271
+0.21066 0.265012 0.319173 0.373006 0.426419 0.479279 0.531501 0.582995
+0.633651 0.683369 0.731753 0.778561 0.823864 0.867665 0.91007 0.951106
+0.990794 1.02922 1.06637 1.1023 1.13705 1.17063 1.20307 1.23423 1.26386
+1.2919 1.31831 1.34315 1.36637 1.38804 1.40814 1.42669 1.44371 1.45922
+1.47325 1.48581 1.49693 1.50663 1.51492 1.52184 1.52741 1.53167 1.53463
+1.53633 1.53679 1.53603 1.53411 1.53103 1.52683 1.52158 1.51526 1.50794
+1.49966 1.49047 1.48078 1.47108 1.46156 1.4522 1.44298 1.43388 1.42488
+1.41598 1.40718 1.39846 1.3898 1.38122 1.37272 1.36426 1.35587 1.34755
+1.33927 1.33107 1.32292 1.31484 1.3068 1.29884 1.29093 1.28311 1.27535
+1.26766 1.26006;
+#X coords 0 1 500 0 200 140 1 0 0;
+#X restore 591 657 graph;
+#X obj 850 286 loadbang;
+#X obj 406 79 loadbang;
+#X obj 34 201 loadbang;
+#X obj 836 633 loadbang;
+#X obj 1129 650 loadbang;
+#X obj 643 291 loadbang;
+#X msg 644 316 500;
+#X text 193 92 off;
+#X text 125 32 NOISE;
+#X text 394 35 DELAY LENGTH MODULATION;
+#X obj 287 91 ead~ 3 3;
+#X text 265 30 PULSE;
+#X text 1313 720 No control;
+#X obj 123 397 tabwrite~ DelayLineOut;
+#X obj 309 395 tabwrite~ EnvelopeAmplitude;
+#X msg 644 364 \; delaypar filter 0 lp1 \$1 0.1;
+#X msg 850 360 \; delaypar filter 1 hp1 \$1 0.1;
+#X msg 836 703 \; delaypar nonlin asymmetric_sat 1.3 1;
+#X msg 833 747 \; delaypar nonlin symmetric_sigmoid 1.3 1;
+#X msg 833 791 \; delaypar nonlin asymmetric_sigmoid 1.3 1;
+#X msg 1129 713 \; delaypar ampctrl 0 0 0 0 0;
+#X msg 1128 754 \; delaypar ampctrl 5 0.1 1 10 1;
+#X msg 1128 793 \; delaypar ampctrl 5 0.2 1 5 1;
+#X floatatom 468 539 5 0 0 0 - - -, f 5;
+#X floatatom 532 541 5 0 0 0 - - -, f 5;
+#X text 461 561 pitch;
+#X text 509 560 envelope;
+#X obj 465 492 sigmund~ -npts 8192 -hop 2048 pitch env;
+#X text 646 62 FILTERS;
+#X text 646 78 command: filter 'num' 'type' 'arg1' ... 'argn' 'rampTime'
+;
+#X text 653 96 filter 'num' lp1 'f' 'rampTime' (1st order lp);
+#X text 652 111 filter 'num' hp1 'f' 'rampTime' (1st order hp);
+#X text 652 126 filter 'num' lp2 'f' 'z' 'rampTime' (2nd order lp)
+;
+#X text 652 142 filter 'num' hp2 'f' 'z' 'rampTime' (2nd order hp)
+;
+#X text 652 158 filter 'num' n 'f' 'g' 'b' 'rampTime' (notch);
+#X text 651 196 type: lp1 \, hp1 \, lp2 \, lp2 \, n;
+#X text 653 210 argi: 'f' (frequency) \, 'z' (damping) \, 'g' (gain)
+\, 'b' (bandwidth);
+#X text 653 239 rampTime: Smooth change if last filter was of same
+type;
+#X text 766 525 SATURATING NONLINEARITY;
+#X text 766 541 command: nonlin 'type' 'gain' 'sat';
+#X text 772 561 type: See examples below;
+#X text 773 592 sat: saturation value (positive only if asymmetric)
+;
+#X text 773 576 gain: small signal gain;
+#X text 1120 506 PI AMPLITUDE CONTROLLER;
+#X text 1119 523 command: ampctrl 'lpFreq' 'ampl' 'P' 'I' 'sat';
+#X text 1127 542 lpFreq: amplitude follower lowpass freq;
+#X text 1128 556 ampl: amplitude reference;
+#X text 1128 571 P: proportional gain;
+#X text 1127 588 I: integral gain;
+#X text 1125 603 sat: integrator saturation value;
+#X msg 834 659 \; delaypar nonlin symmetric_sat 1 1;
+#X msg 29 782 \; delaypar nonlin symmetric_sat 1 1 \; delaypar pluck
+0.5 0.2;
+#X text 32 727 command: pluck 'ampl' 'pos';
+#X text 41 743 ampl: pluck amplitude;
+#X text 41 758 pos: pluck position alow string \, 0.0<pos<1.0;
+#X text 32 711 PLUCK STRING (Karplus-Strong);
+#X text 653 182 num: filter number 0 ... 4;
+#X msg 1454 537 \; delaypar ampctrl 5 \$1 1 10 1.2;
+#X obj 117 549 *~;
+#X obj 117 549 *~;
+#X msg 644 392 \; delaypar filter 0 lp1 1000 0.1 \, filter 1 hp1 10
+0.1;
+#N canvas 368 401 1552 849 delaypoly 1;
+#X obj 48 10 inlet~;
+#X obj 347 596 outlet~;
+#X obj 79 158 delayfbck~ 2;
+#X obj 205 8 inlet~;
+#X obj 136 6 inlet;
+#X obj 82 100 receive delaypar1;
+#X obj 200 159 delayfbck~ 2;
+#X obj 323 160 delayfbck~ 2;
+#X obj 453 161 delayfbck~ 2;
+#X obj 578 161 delayfbck~ 2;
+#X obj 714 161 delayfbck~ 2;
+#X obj 847 162 delayfbck~ 2;
+#X obj 983 161 delayfbck~ 2;
+#X obj 1122 162 delayfbck~ 2;
+#X obj 1264 162 delayfbck~ 2;
+#X obj 203 101 receive delaypar2;
+#X obj 326 102 receive delaypar3;
+#X obj 456 103 receive delaypar4;
+#X obj 581 103 receive delaypar5;
+#X obj 717 103 receive delaypar6;
+#X obj 850 104 receive delaypar7;
+#X obj 987 103 receive delaypar8;
+#X obj 1125 104 receive delaypar9;
+#X obj 1267 104 receive delaypar10;
+#X obj 1236 747 mtof;
+#X floatatom 1236 714 5 0 0 0 - - -, f 5;
+#X msg 1197 766 1;
+#X obj 1203 798 /;
+#X obj 1196 740 bang;
+#X text 1225 332 DELAY LENGTH;
+#X text 1225 347 command: delay 'len' 'rampTime' 'pitchCorrect';
+#X text 1231 365 len: delay length in seconds;
+#X text 1232 381 rampTime: Smooth change [s];
+#X text 1232 397 pitchCorrect: 0: No correction;
+#X text 1316 412 1: corection based on filters phase;
+#X text 1575 540 <-- first argument \, number of voices \; second argument
+selects voice stealing;
+#X text 1522 591 Output is in the printout window.;
+#X obj 1472 457 notein;
+#X obj 1472 496 poly 10 1, f 17;
+#X floatatom 1660 343 5 0 0 0 - - -, f 5;
+#X obj 1661 306 / 500;
+#X floatatom 1763 271 0 0 0 0 - - -;
+#X floatatom 1717 271 0 0 0 0 - - -;
+#X obj 1717 244 touchin;
+#X obj 1406 652 route 1 2 3 4 5 6 7 8 9 10, f 208;
+#X obj 1403 747 mtof;
+#X floatatom 1403 714 5 0 0 0 - - -, f 5;
+#X msg 1364 766 1;
+#X obj 1370 798 /;
+#X obj 1363 740 bang;
+#X obj 1576 746 mtof;
+#X floatatom 1576 713 5 0 0 0 - - -, f 5;
+#X msg 1537 765 1;
+#X obj 1543 797 /;
+#X obj 1536 739 bang;
+#X obj 1751 744 mtof;
+#X floatatom 1751 711 5 0 0 0 - - -, f 5;
+#X msg 1712 763 1;
+#X obj 1718 795 /;
+#X obj 1711 737 bang;
+#X obj 1928 742 mtof;
+#X floatatom 1928 709 5 0 0 0 - - -, f 5;
+#X msg 1889 761 1;
+#X obj 1895 793 /;
+#X obj 1888 735 bang;
+#X obj 2104 742 mtof;
+#X floatatom 2104 709 5 0 0 0 - - -, f 5;
+#X msg 2065 761 1;
+#X obj 2071 793 /;
+#X obj 2064 735 bang;
+#X obj 2271 742 mtof;
+#X floatatom 2271 709 5 0 0 0 - - -, f 5;
+#X msg 2232 761 1;
+#X obj 2238 793 /;
+#X obj 2231 735 bang;
+#X obj 2444 741 mtof;
+#X floatatom 2444 708 5 0 0 0 - - -, f 5;
+#X msg 2405 760 1;
+#X obj 2411 792 /;
+#X obj 2404 734 bang;
+#X obj 2619 739 mtof;
+#X floatatom 2619 706 5 0 0 0 - - -, f 5;
+#X msg 2580 758 1;
+#X obj 2586 790 /;
+#X obj 2579 732 bang;
+#X obj 2796 737 mtof;
+#X floatatom 2796 704 5 0 0 0 - - -, f 5;
+#X msg 2757 756 1;
+#X obj 2763 788 /;
+#X obj 2756 730 bang;
+#X msg 1370 834 \; delaypar2 delay \$1 0.01 1;
+#X msg 1543 833 \; delaypar3 delay \$1 0.01 1;
+#X msg 1718 831 \; delaypar4 delay \$1 0.01 1;
+#X msg 1895 829 \; delaypar5 delay \$1 0.01 1;
+#X msg 2071 829 \; delaypar6 delay \$1 0.01 1;
+#X msg 2238 829 \; delaypar7 delay \$1 0.01 1;
+#X msg 2411 828 \; delaypar8 delay \$1 0.01 1;
+#X msg 2586 826 \; delaypar9 delay \$1 0.01 1;
+#X msg 2763 824 \; delaypar10 delay \$1 0.01 1;
+#X obj 1512 621 print;
+#X obj 44 277 delayfbck~ 2;
+#X obj 160 278 delayfbck~ 2;
+#X obj 288 279 delayfbck~ 2;
+#X obj 418 280 delayfbck~ 2;
+#X obj 543 280 delayfbck~ 2;
+#X obj 679 280 delayfbck~ 2;
+#X obj 812 281 delayfbck~ 2;
+#X obj 948 280 delayfbck~ 2;
+#X obj 1087 281 delayfbck~ 2;
+#X obj 1229 281 delayfbck~ 2;
+#X obj 488 598 outlet~;
+#X obj 1477 566 pack 0 0 0.01;
+#X msg 1203 834 \; delaypar1 delay \$1 0.01 1;
+#X obj 157 717 *~;
+#X floatatom 76 647 8 0 0.1 0 - - -, f 8;
+#X obj 462 723 *~;
+#X obj 296 725 *~;
+#X obj 379 725 *~;
+#X obj 216 721 *~;
+#X obj 553 722 *~;
+#X obj 612 726 *~;
+#X obj 76 618 / 100;
+#X floatatom 72 576 5 0 100 0 - - -, f 5;
+#X msg 68 540 0;
+#X obj 38 515 loadbang;
+#X obj 8 466 r fad_r2;
+#X obj 26 617 * 0.2;
+#X connect 0 0 2 0;
+#X connect 2 0 1 0;
+#X connect 2 0 118 0;
+#X connect 3 0 2 1;
+#X connect 4 0 2 0;
+#X connect 4 0 6 0;
+#X connect 4 0 7 0;
+#X connect 4 0 8 0;
+#X connect 4 0 9 0;
+#X connect 4 0 10 0;
+#X connect 4 0 11 0;
+#X connect 4 0 12 0;
+#X connect 4 0 13 0;
+#X connect 4 0 14 0;
+#X connect 4 0 100 0;
+#X connect 4 0 101 0;
+#X connect 4 0 102 0;
+#X connect 4 0 103 0;
+#X connect 4 0 104 0;
+#X connect 4 0 105 0;
+#X connect 4 0 106 0;
+#X connect 4 0 107 0;
+#X connect 4 0 108 0;
+#X connect 4 0 109 0;
+#X connect 5 0 2 0;
+#X connect 5 0 100 0;
+#X connect 6 0 1 0;
+#X connect 6 0 116 0;
+#X connect 7 0 1 0;
+#X connect 8 0 1 0;
+#X connect 8 0 117 0;
+#X connect 9 0 1 0;
+#X connect 9 0 115 0;
+#X connect 10 0 1 0;
+#X connect 10 0 119 0;
+#X connect 11 0 1 0;
+#X connect 11 0 120 0;
+#X connect 12 0 1 0;
+#X connect 13 0 1 0;
+#X connect 14 0 1 0;
+#X connect 15 0 6 0;
+#X connect 15 0 101 0;
+#X connect 16 0 7 0;
+#X connect 16 0 102 0;
+#X connect 17 0 8 0;
+#X connect 17 0 103 0;
+#X connect 18 0 9 0;
+#X connect 18 0 104 0;
+#X connect 19 0 10 0;
+#X connect 19 0 105 0;
+#X connect 20 0 11 0;
+#X connect 20 0 106 0;
+#X connect 21 0 12 0;
+#X connect 21 0 107 0;
+#X connect 22 0 13 0;
+#X connect 22 0 108 0;
+#X connect 23 0 14 0;
+#X connect 23 0 109 0;
+#X connect 24 0 27 1;
+#X connect 25 0 24 0;
+#X connect 25 0 28 0;
+#X connect 26 0 27 0;
+#X connect 27 0 112 0;
+#X connect 28 0 26 0;
+#X connect 37 0 38 0;
+#X connect 37 1 38 1;
+#X connect 38 0 111 0;
+#X connect 38 1 111 1;
+#X connect 38 2 40 0;
+#X connect 40 0 39 0;
+#X connect 42 0 40 0;
+#X connect 43 0 42 0;
+#X connect 43 1 41 0;
+#X connect 44 0 25 0;
+#X connect 44 1 46 0;
+#X connect 44 2 51 0;
+#X connect 44 3 56 0;
+#X connect 44 4 61 0;
+#X connect 44 5 66 0;
+#X connect 44 6 71 0;
+#X connect 44 7 76 0;
+#X connect 44 8 81 0;
+#X connect 44 9 86 0;
+#X connect 45 0 48 1;
+#X connect 46 0 45 0;
+#X connect 46 0 49 0;
+#X connect 47 0 48 0;
+#X connect 48 0 90 0;
+#X connect 49 0 47 0;
+#X connect 50 0 53 1;
+#X connect 51 0 50 0;
+#X connect 51 0 54 0;
+#X connect 52 0 53 0;
+#X connect 53 0 91 0;
+#X connect 54 0 52 0;
+#X connect 55 0 58 1;
+#X connect 56 0 55 0;
+#X connect 56 0 59 0;
+#X connect 57 0 58 0;
+#X connect 58 0 92 0;
+#X connect 59 0 57 0;
+#X connect 60 0 63 1;
+#X connect 61 0 60 0;
+#X connect 61 0 64 0;
+#X connect 62 0 63 0;
+#X connect 63 0 93 0;
+#X connect 64 0 62 0;
+#X connect 65 0 68 1;
+#X connect 66 0 65 0;
+#X connect 66 0 69 0;
+#X connect 67 0 68 0;
+#X connect 68 0 94 0;
+#X connect 69 0 67 0;
+#X connect 70 0 73 1;
+#X connect 71 0 70 0;
+#X connect 71 0 74 0;
+#X connect 72 0 73 0;
+#X connect 73 0 95 0;
+#X connect 74 0 72 0;
+#X connect 75 0 78 1;
+#X connect 76 0 75 0;
+#X connect 76 0 79 0;
+#X connect 77 0 78 0;
+#X connect 78 0 96 0;
+#X connect 79 0 77 0;
+#X connect 80 0 83 1;
+#X connect 81 0 80 0;
+#X connect 81 0 84 0;
+#X connect 82 0 83 0;
+#X connect 83 0 97 0;
+#X connect 84 0 82 0;
+#X connect 85 0 88 1;
+#X connect 86 0 85 0;
+#X connect 86 0 89 0;
+#X connect 87 0 88 0;
+#X connect 88 0 98 0;
+#X connect 89 0 87 0;
+#X connect 100 0 110 0;
+#X connect 100 0 113 0;
+#X connect 101 0 110 0;
+#X connect 102 0 110 0;
+#X connect 103 0 110 0;
+#X connect 104 0 110 0;
+#X connect 105 0 110 0;
+#X connect 106 0 110 0;
+#X connect 107 0 110 0;
+#X connect 108 0 110 0;
+#X connect 109 0 110 0;
+#X connect 111 0 44 0;
+#X connect 111 0 99 0;
+#X connect 113 0 6 1;
+#X connect 114 0 113 1;
+#X connect 114 0 118 1;
+#X connect 114 0 116 1;
+#X connect 114 0 117 1;
+#X connect 114 0 115 1;
+#X connect 114 0 119 1;
+#X connect 114 0 120 1;
+#X connect 115 0 105 1;
+#X connect 116 0 8 1;
+#X connect 117 0 104 1;
+#X connect 118 0 102 1;
+#X connect 119 0 11 1;
+#X connect 120 0 107 1;
+#X connect 121 0 114 0;
+#X connect 122 0 121 0;
+#X connect 123 0 122 0;
+#X connect 124 0 123 0;
+#X connect 125 0 126 0;
+#X connect 126 0 114 0;
+#X restore 185 248 pd delaypoly;
+#X msg 644 421 \; delaypar filter 0 lp1 300 0.1 \, filter 1 hp1 10
+0.1;
+#X obj 13 630 writesf~;
+#X msg 14 544 open test.wav;
+#X msg 28 570 start;
+#X msg 33 595 stop;
+#X msg 186 456 0.05 100;
+#X obj 1151 84 fad9/fad9 1;
+#N canvas 0 62 450 300 lpCntrl 0;
+#X obj 114 60 r fad_r1;
+#X floatatom 114 89 5 0 0 0 - - -, f 5;
+#X obj 114 172 mtof;
+#X floatatom 114 195 5 0 0 0 - - -, f 5;
+#X obj 114 149 + 15;
+#X obj 114 115 * 80;
+#X obj 112 231 outlet;
+#X text 67 24 Control lowpass frequency with kob r1;
+#X connect 0 0 1 0;
+#X connect 1 0 5 0;
+#X connect 2 0 3 0;
+#X connect 3 0 6 0;
+#X connect 4 0 2 0;
+#X connect 5 0 4 0;
+#X restore 709 289 pd lpCntrl;
+#X msg 850 311 15;
+#X text 718 312 R1;
+#X obj 1432 639 r fad_r3;
+#X obj 1499 639 r fad_r4;
+#X msg 1129 675 \; delaypar ampctrl 5 0.4 10 100 1.2;
+#X msg 1427 751 \; delaypar ampctrl 5 \$1 10 100 \$2;
+#X obj 1432 692 pack f f;
+#X obj 1509 664 bang;
+#X obj 296 436 r fad_vV;
+#X floatatom 296 461 5 0 0 0 - - -, f 5;
+#X obj 296 484 * 0.1;
+#X connect 2 0 57 0;
+#X connect 2 0 56 0;
+#X connect 3 0 4 0;
+#X connect 4 0 104 0;
+#X connect 5 0 4 1;
+#X connect 6 0 5 0;
+#X connect 7 0 5 0;
+#X connect 9 0 39 0;
+#X connect 9 0 106 0;
+#X connect 10 0 9 1;
+#X connect 10 0 101 1;
+#X connect 11 0 10 0;
+#X connect 18 0 17 1;
+#X connect 19 0 18 0;
+#X connect 25 0 53 0;
+#X connect 28 0 104 1;
+#X connect 29 0 59 0;
+#X connect 30 0 58 0;
+#X connect 31 0 2 0;
+#X connect 32 0 104 2;
+#X connect 33 0 32 1;
+#X connect 34 0 33 0;
+#X connect 35 0 32 0;
+#X connect 36 0 37 0;
+#X connect 37 0 38 0;
+#X connect 38 0 35 0;
+#X connect 41 0 33 0;
+#X connect 43 0 113 0;
+#X connect 44 0 36 0;
+#X connect 45 0 31 0;
+#X connect 46 0 93 0;
+#X connect 47 0 117 0;
+#X connect 48 0 49 0;
+#X connect 49 0 30 0;
+#X connect 53 0 104 0;
+#X connect 70 0 66 0;
+#X connect 70 1 67 0;
+#X connect 101 0 40 0;
+#X connect 101 0 106 0;
+#X connect 104 0 57 0;
+#X connect 104 0 70 0;
+#X connect 104 0 56 0;
+#X connect 104 0 101 0;
+#X connect 104 1 9 0;
+#X connect 107 0 106 0;
+#X connect 108 0 106 0;
+#X connect 109 0 106 0;
+#X connect 110 0 10 0;
+#X connect 112 0 30 0;
+#X connect 113 0 29 0;
+#X connect 115 0 119 0;
+#X connect 116 0 119 1;
+#X connect 116 0 120 0;
+#X connect 119 0 118 0;
+#X connect 120 0 119 0;
+#X connect 121 0 122 0;
+#X connect 122 0 123 0;
+#X connect 123 0 10 0;

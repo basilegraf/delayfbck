@@ -75,14 +75,15 @@ del1.hp1(0, 10)
 del2.hp1(0, 10)
 del3.hp1(0, 10)
 
-del1.lp1(1, 1500)
-del2.lp1(1, 2000)
-del3.lp1(1, 3000)
+rho = 5
+del1.lp1(1, rho*150)
+del2.lp1(1, rho*200)
+del3.lp1(1, rho*300)
 
-
-del1.note(32+24)
-del2.note(36+24)
-del3.note(39+24)
+sh = 0
+del1.note(30+sh)
+del2.note(37+sh)
+del3.note(42+sh)
 
 del1.delay(0.4)
 del2.delay(0.2)
@@ -93,7 +94,7 @@ del2.pluck(0.3,0)
 del3.pluck(0.2,0)
 
 del1.ampctrl(0.5)
-del2.ampctrl(0.2)
+del2.ampctrl(0.3)
 del3.ampctrl(0.2)
 
 del1.ampctrlOff()
