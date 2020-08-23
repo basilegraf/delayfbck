@@ -54,7 +54,7 @@ typedef struct _filter {
 
 
 
-void filter_init(t_filter* filt, t_int order);
+void filter_init(t_filter* filt);
 void filter_free(t_filter* filt);
 void filter_step(t_filter* filt, t_float x, t_float* y);
 
@@ -76,7 +76,8 @@ void filter_n(t_filter* filt, t_float f, t_float g, t_float b, t_float h);
 void filter_x(t_filter* filt, enum e_set_filter e_set_to);
 
 // Bode of a filter filt transfer function, evaluated at normalized frequency f = freq/fsampling in [0, 1]
-void filter_bode(t_filter* filt,  t_float f, t_float* mag, t_float* phase);
+// e_set: choose between current filter coeffs and and target filter coeffs (after ramp)
+void filter_bode(t_filter* filt,  t_float f, enum e_set_filter e_set, t_float* mag, t_float* phase);
 
 
 #endif /* _FILTER_H_ */

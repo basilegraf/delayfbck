@@ -255,6 +255,7 @@ void *delayfbck_tilde_new(t_floatarg f)
   // Initialise filters to unit gain
   for (int k=0; k<MAX_NUM_FILTERS; k++) 
   {
+    filter_init(&x->filters[k]);
     filter_gain(&x->filters[k], 1.0);
   }
   
@@ -341,6 +342,10 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
     error("delayfbck filter: Filter number out of range 0...%d.", MAX_NUM_FILTERS-1);
   }
   
+  // Block any filter ramping currently in progress (will freeze b,a to current value)
+  t_int n_param_steps = 0;
+  x->filters[filtNum].n_param_steps = 0;
+  
   if (filtTypeSym == x->sym_g)
   {
     //post("delayfbck: g");
@@ -392,12 +397,12 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   if (prevType != x->filters[filtNum].type)
   {
       // Filter type change, we cannot ramp parameters. Set in one step
-      x->filters[filtNum].n_param_steps = 1;  
+      n_param_steps = 1;  
   }
   else
   {
-      x->filters[filtNum].n_param_steps = (t_int) roundf(filtRampTime / x->sampleTime);
-      x->filters[filtNum].n_param_steps = x->filters[filtNum].n_param_steps >= 1 ? x->filters[filtNum].n_param_steps : 1;
+      n_param_steps = (t_int) roundf(filtRampTime / x->sampleTime);
+      n_param_steps = n_param_steps >= 1 ? n_param_steps : 1;
   }
 
   
@@ -407,11 +412,11 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
       switch (x->filters[filtNum].param_ramptype[k])
       {
           case e_ramp_lin:
-            x->filters[filtNum].param_step[k] =  (filtargs[k] - x->filters[filtNum].param[k]) / ((t_float) x->filters[filtNum].n_param_steps);
+            x->filters[filtNum].param_step[k] =  (filtargs[k] - x->filters[filtNum].param[k]) / ((t_float) n_param_steps);
             break;
           
           case e_ramp_exp:
-            x->filters[filtNum].param_step[k] =  powf(filtargs[k] / x->filters[filtNum].param[k] , 1.0 / ((t_float) x->filters[filtNum].n_param_steps));
+            x->filters[filtNum].param_step[k] =  powf(filtargs[k] / x->filters[filtNum].param[k] , 1.0 / ((t_float) n_param_steps));
             break;
           
           default:
@@ -424,6 +429,9 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   filter_x(&x->filters[filtNum],  e_set_filter_coeffs_target);
   
   x->filters[filtNum].h = x->sampleTime; // TODO ??
+  
+  // Finally, allow filter ramping again by setting x->filters[filtNum].n_param_steps
+  x->filters[filtNum].n_param_steps = n_param_steps;
 }
 
 
@@ -476,9 +484,15 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
         t_float magk, phasek;
         for (t_int k=0; k<MAX_NUM_FILTERS; k++)
         {
-            filter_bode(&x->filters[k],  fNorm, &magk, &phasek);
+            filter_bode(&x->filters[k],  fNorm, e_set_filter_coeffs_target, &magk, &phasek); // Use phase of target filter (after any currently ongoing filter ramp)
             mag *= magk;
             phase += phasek;
+            
+            post("Filter[%d] phasek = %g, magk=%g \n   a = [%g, %g], \n   b = [%g, %g, %g] \n   a_target = [%g, %g], \n   b_target = [%g, %g, %g]", k, 180.0 * phasek / PI, magk,  
+            x->filters[k].a[0], x->filters[k].a[1],
+            x->filters[k].b[0], x->filters[k].b[1], x->filters[k].b[2],
+            x->filters[k].a_target[0], x->filters[k].a_target[1],
+            x->filters[k].b_target[0], x->filters[k].b_target[1], x->filters[k].b_target[2]);
         }
         post("-");
         // Add mag and phase of non-linearity

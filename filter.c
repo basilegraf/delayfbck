@@ -14,15 +14,10 @@ basile dot graf at a3 dot epfl dot ch
 
 
 
-
-void filter_init(t_filter* filt, t_int order)
+// Inititialize filter as a static 1 gain
+void filter_init(t_filter* filt)
 {
-    if (order > MAX_FILTER_ORDER)
-    {
-        error("filter: given order was %d max order is %d",(int) order,(int) MAX_FILTER_ORDER);
-        order = MAX_FILTER_ORDER;
-    }
-    filt->order = order;
+    filt->order = 0;
     filt->n = 0;
     for (int k=0; k<MAX_FILTER_ORDER; k++)
     {
@@ -33,8 +28,8 @@ void filter_init(t_filter* filt, t_int order)
         filt->a_target[k] = 0.0;
     }
     filt->b[0] = 1.0;
-    filt->b[MAX_FILTER_ORDER] = 0.0;
     filt->b_target[0] = 1.0;
+    filt->b[MAX_FILTER_ORDER] = 0.0;
     filt->b_target[MAX_FILTER_ORDER] = 0.0;
     filt->v[MAX_FILTER_ORDER] = 0.0;
     
@@ -69,6 +64,7 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
         }
         filter_x(filt, e_set_filter_coeffs);
         filt->n_param_steps = 0;
+        post("filter_step : copied param_target -> param, TODO REMOVE\n");
     }
     else if (filt->n_param_steps > 1)
     {
@@ -130,7 +126,6 @@ void filter_gain(t_filter* filt, t_float g)
     filt->param[0] = g;
     filt->param[1] = 0.0;
     filt->param[2] = 0.0;
-    filt->n_param_steps = 0; // No ramping
     _filter_x_immediate(filt);
 }
 
@@ -143,7 +138,6 @@ void filter_lp2(t_filter* filt, t_float f, t_float z, t_float h)
     filt->param[0] = f;
     filt->param[1] = z;
     filt->param[2] = 0.0;
-    filt->n_param_steps = 0; // No ramping
     _filter_x_immediate(filt);
 }
 
@@ -156,7 +150,6 @@ void filter_hp2(t_filter* filt, t_float f, t_float z, t_float h)
     filt->param[0] = f;
     filt->param[1] = z;
     filt->param[2] = 0.0;
-    filt->n_param_steps = 0; // No ramping
     _filter_x_immediate(filt);   
 }
 
@@ -168,7 +161,6 @@ void filter_lp1(t_filter* filt, t_float f, t_float h)
     filt->param[0] = f;
     filt->param[1] = 0.0;
     filt->param[2] = 0.0;
-    filt->n_param_steps = 0; // No ramping
     _filter_x_immediate(filt);
 }
 
@@ -180,7 +172,6 @@ void filter_hp1(t_filter* filt, t_float f, t_float h)
     filt->param[0] = f;
     filt->param[1] = 0.0;
     filt->param[2] = 0.0;
-    filt->n_param_steps = 0; // No ramping
     _filter_x_immediate(filt);
 }
 
@@ -335,7 +326,7 @@ void filter_x(t_filter* filt, enum e_set_filter e_set_to)
 // c order is descending powers
 // If hasLead is flase, n+1 values are taken from c[]
 // If hasLead is true, the polynomial is prepended with 1.0 and only n values are taken from c[]
-void polynom_bode(t_fsample* c, t_int n,  t_float f, bool hasLead, t_float* mag, t_float* phase)
+void _polynom_bode(t_fsample* c, t_int n,  t_float f, bool hasLead, t_float* mag, t_float* phase)
 {
     t_float w = TWOPI * f;
     t_float real = 0.0;
@@ -364,12 +355,25 @@ void polynom_bode(t_fsample* c, t_int n,  t_float f, bool hasLead, t_float* mag,
 
 
 // Bode of a filter filt transfer function, evaluated at normalized frequency f = freq/fsampling in [0, 1]
-void filter_bode(t_filter* filt,  t_float f, t_float* mag, t_float* phase)
+void filter_bode(t_filter* filt,  t_float f, enum e_set_filter e_set, t_float* mag, t_float* phase)
 {
     t_float magNum, magDen, phaseNum, phaseDen;
 
-    polynom_bode(filt->b, filt->order, f, false, &magNum, &phaseNum);
-    polynom_bode(filt->a, filt->order, f, true, &magDen, &phaseDen);
+    switch(e_set)
+    {
+        case e_set_filter_coeffs:
+            _polynom_bode(filt->b, filt->order, f, false, &magNum, &phaseNum);
+            _polynom_bode(filt->a, filt->order, f, true, &magDen, &phaseDen);
+            break;
+        case e_set_filter_coeffs_target:
+        // Define filt->a_target and _target from filt->param_target
+            _polynom_bode(filt->b_target, filt->order, f, false, &magNum, &phaseNum);
+            _polynom_bode(filt->a_target, filt->order, f, true, &magDen, &phaseDen);
+            break;
+        default:
+            error("filter_bode: Unknown filter coefficient setting option.");
+    }
+    
     *mag = magNum / magDen;
     *phase = phaseNum - phaseDen;
 }
