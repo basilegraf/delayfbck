@@ -26,6 +26,7 @@
 
 #define MAX_NUM_FILTERS 5
 
+
 /**
  * define a new "class" 
  */
@@ -73,6 +74,7 @@ static t_class *delayfbck_tilde_class;
 
   t_float sampleTime; // elsewhere??
 
+  t_float delDurationDesired;
   t_float delDuration;
   t_float delDurationStep;
   t_int delDurationNSteps;
@@ -85,6 +87,9 @@ static t_class *delayfbck_tilde_class;
   t_outlet* x_out1;
   t_outlet* x_out2;
 } t_delayfbck_tilde;
+
+// Function declarations
+void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect);
 
 
 /**
@@ -269,6 +274,7 @@ void *delayfbck_tilde_new(t_floatarg f)
 
   // Init delay line
   delay_init(&x->del, 44100);
+  x->delDurationDesired = 1.0/100.0;
   x->delDuration = 1.0/100.0;
   delay_set_duration(&x->del, 1.0/100.0,  x->sampleTime);
   x->delDurationStep = 0.0;
@@ -432,6 +438,10 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   
   // Finally, allow filter ramping again by setting x->filters[filtNum].n_param_steps
   x->filters[filtNum].n_param_steps = n_param_steps;
+  
+  // Set the delay duration to the desired one ==> apply duration correction based on new filters
+  t_floatarg pitchCorrect = 1;
+  set_delay(x, x->delDurationDesired, filtRampTime, pitchCorrect);
 }
 
 
@@ -474,6 +484,9 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 
 void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect)
 {
+    // Store the uncompensated desired delay
+    x->delDurationDesired = duration;
+    
     // If desired, take phase of filters and nonlin gain at frequency 1/duration into account 
     if (pitchCorrect > 0.0)
     {
@@ -488,11 +501,11 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
             mag *= magk;
             phase += phasek;
             
-            post("Filter[%d] phasek = %g, magk=%g \n   a = [%g, %g], \n   b = [%g, %g, %g] \n   a_target = [%g, %g], \n   b_target = [%g, %g, %g]", k, 180.0 * phasek / PI, magk,  
+            /*post("Filter[%d] phasek = %g, magk=%g \n   a = [%g, %g], \n   b = [%g, %g, %g] \n   a_target = [%g, %g], \n   b_target = [%g, %g, %g]", k, 180.0 * phasek / PI, magk,  
             x->filters[k].a[0], x->filters[k].a[1],
             x->filters[k].b[0], x->filters[k].b[1], x->filters[k].b[2],
             x->filters[k].a_target[0], x->filters[k].a_target[1],
-            x->filters[k].b_target[0], x->filters[k].b_target[1], x->filters[k].b_target[2]);
+            x->filters[k].b_target[0], x->filters[k].b_target[1], x->filters[k].b_target[2]);*/
         }
         post("-");
         // Add mag and phase of non-linearity

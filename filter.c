@@ -64,7 +64,7 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
         }
         filter_x(filt, e_set_filter_coeffs);
         filt->n_param_steps = 0;
-        post("filter_step : copied param_target -> param, TODO REMOVE\n");
+        //post("filter_step : copied param_target -> param, TODO REMOVE\n");
     }
     else if (filt->n_param_steps > 1)
     {
