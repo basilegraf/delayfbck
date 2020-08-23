@@ -419,6 +419,10 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
       }
       
   }
+  
+  // Set target coefficients (i.e. filter coeffs after ramping. To be used for delay length compensation)
+  filter_x(&x->filters[filtNum],  e_set_filter_coeffs_target);
+  
   x->filters[filtNum].h = x->sampleTime; // TODO ??
 }
 

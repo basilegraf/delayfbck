@@ -29,11 +29,19 @@ enum e_ramp_type {
     e_ramp_exp
 };
 
+enum e_set_filter {
+    e_set_filter_coeffs,
+    e_set_filter_coeffs_target
+};
+
 typedef struct _filter {
     t_int order, n;
     t_fsample b[MAX_FILTER_ORDER+1];	// nuemrator (b coeffs) , size order+1
     t_fsample a[MAX_FILTER_ORDER];	// denomintaor (a coeffs), size order
     t_fsample v[MAX_FILTER_ORDER+1]; 	// state, size order+1
+    // Target filter coefficients (reached after a ramp). Used for delay length compensation:
+    t_fsample b_target[MAX_FILTER_ORDER+1];	// nuemrator (b coeffs) , size order+1
+    t_fsample a_target[MAX_FILTER_ORDER];	// denomintaor (a coeffs), size order
     // Variables for smooth parameter change:
     enum e_filter_type type;
     t_fsample h;
@@ -65,7 +73,7 @@ void filter_hp1(t_filter* filt, t_float f, t_float h);
 // Notch filter with frequency f, gain g, bandwidth b and sample time h
 void filter_n(t_filter* filt, t_float f, t_float g, t_float b, t_float h);
 
-void filter_x(t_filter* filt);
+void filter_x(t_filter* filt, enum e_set_filter e_set_to);
 
 // Bode of a filter filt transfer function, evaluated at normalized frequency f = freq/fsampling in [0, 1]
 void filter_bode(t_filter* filt,  t_float f, t_float* mag, t_float* phase);

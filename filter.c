@@ -29,9 +29,13 @@ void filter_init(t_filter* filt, t_int order)
         filt->b[k] = 0.0;
         filt->a[k] = 0.0;
         filt->v[k] = 0.0;
+        filt->b_target[k] = 0.0;
+        filt->a_target[k] = 0.0;
     }
     filt->b[0] = 1.0;
     filt->b[MAX_FILTER_ORDER] = 0.0;
+    filt->b_target[0] = 1.0;
+    filt->b_target[MAX_FILTER_ORDER] = 0.0;
     filt->v[MAX_FILTER_ORDER] = 0.0;
     
     filt->type = e_filter_num_types; // This corresponds to no actual type => Will prevent ramping at first set
@@ -63,7 +67,7 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
         {
             filt->param[k] = filt->param_target[k];
         }
-        filter_x(filt);
+        filter_x(filt, e_set_filter_coeffs);
         filt->n_param_steps = 0;
     }
     else if (filt->n_param_steps > 1)
@@ -80,7 +84,7 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
             }
             
         }
-        filter_x(filt);
+        filter_x(filt, e_set_filter_coeffs);
         filt->n_param_steps--;
     }
     
@@ -107,6 +111,18 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
 }
 
 
+// Helper for defining filter without ramping. Copy param[] to param_target[], etc
+void _filter_x_immediate(t_filter* filt)
+{
+    for (t_int k=0; k<MAX_FILTER_NUM_PARAM; k++)
+    {
+        filt->param_target[k] = filt->param[k];
+    }
+    filt->n_param_steps = 0;
+    filter_x(filt, e_set_filter_coeffs);        // Define b, a coeffs
+    filter_x(filt, e_set_filter_coeffs_target); // Define b_target, a_target coeffs, (bah, we could copy them as well...)
+}
+
 // Static gain
 void filter_gain(t_filter* filt, t_float g)
 {
@@ -114,7 +130,8 @@ void filter_gain(t_filter* filt, t_float g)
     filt->param[0] = g;
     filt->param[1] = 0.0;
     filt->param[2] = 0.0;
-    filter_x(filt);
+    filt->n_param_steps = 0; // No ramping
+    _filter_x_immediate(filt);
 }
 
 
@@ -126,7 +143,8 @@ void filter_lp2(t_filter* filt, t_float f, t_float z, t_float h)
     filt->param[0] = f;
     filt->param[1] = z;
     filt->param[2] = 0.0;
-    filter_x(filt);
+    filt->n_param_steps = 0; // No ramping
+    _filter_x_immediate(filt);
 }
 
 
@@ -138,7 +156,8 @@ void filter_hp2(t_filter* filt, t_float f, t_float z, t_float h)
     filt->param[0] = f;
     filt->param[1] = z;
     filt->param[2] = 0.0;
-    filter_x(filt);   
+    filt->n_param_steps = 0; // No ramping
+    _filter_x_immediate(filt);   
 }
 
 // 1st order lowpass with cutoff freq f and sample time h
@@ -149,7 +168,8 @@ void filter_lp1(t_filter* filt, t_float f, t_float h)
     filt->param[0] = f;
     filt->param[1] = 0.0;
     filt->param[2] = 0.0;
-    filter_x(filt);
+    filt->n_param_steps = 0; // No ramping
+    _filter_x_immediate(filt);
 }
 
 // 1st order highpass with cutoff freq f and sample time h
@@ -160,7 +180,8 @@ void filter_hp1(t_filter* filt, t_float f, t_float h)
     filt->param[0] = f;
     filt->param[1] = 0.0;
     filt->param[2] = 0.0;
-    filter_x(filt);
+    filt->n_param_steps = 0; // No ramping
+    _filter_x_immediate(filt);
 }
 
 
@@ -172,95 +193,120 @@ void filter_n(t_filter* filt, t_float f, t_float g, t_float bHz, t_float h)
     filt->param[0] = f;
     filt->param[1] = g;
     filt->param[2] = bHz;
-    filter_x(filt);
+    _filter_x_immediate(filt);
 }
 
 
 
 
-void filter_x(t_filter* filt)
+void filter_x(t_filter* filt, enum e_set_filter e_set_to)
 {
     t_fsample h = filt->h;
     t_float f, z, w, hw, hw2, a0i, g, b, bHz, bh, sqg;
+    t_fsample* filtParam;
+    t_fsample* filtB;
+    t_fsample* filtA;
+    
+    switch(e_set_to)
+    {
+        case e_set_filter_coeffs:
+            // Define filt->a and filt->b from filt->param
+            filtParam = filt->param;
+            filtB = filt->b;
+            filtA = filt->a;
+            break;
+        case e_set_filter_coeffs_target:
+        // Define filt->a_target and _target from filt->param_target
+            filtParam = filt->param_target;
+            filtB = filt->b_target;
+            filtA = filt->a_target;
+            break;
+        default:
+            filtParam = filt->param; // just to avoid warning
+            filtB = filt->b;         // just to avoid warning
+            filtA = filt->a;         // just to avoid warning
+            error("filter: Unknown filter coefficient setting option.");
+    }
+    
     switch(filt->type)
     {
         case e_filter_gain:
         // Static gain g
         // param = {g}
             filt->order = 0;
-            filt->b[0] = filt->param[0]; // gain g
+            filtB[0] = filtParam[0]; // gain g
             break;
 
         case e_filter_lp2:
         // 2nd order lowpass with freq f and damping z
         // param = {f, z}
-            f = filt->param[0];
-            z = filt->param[1];
+            f = filtParam[0];
+            z = filtParam[1];
             filt->order = 2;
             w = 2.0 * PI * f;
             hw = h * w;
             hw2 = hw * hw;
             a0i = 1.0 / (4.0 + hw * (hw + 4.0*z));
-            filt->b[0] = a0i * hw2;
-            filt->b[1] = 2.0 * filt->b[0];
-            filt->b[2] = filt->b[0];
+            filtB[0] = a0i * hw2;
+            filtB[1] = 2.0 * filtB[0];
+            filtB[2] = filtB[0];
 
-            filt->a[0] = a0i * (-8.0 + 2.0 * hw2);
-            filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));
+            filtA[0] = a0i * (-8.0 + 2.0 * hw2);
+            filtA[1] = a0i * (4.0 + hw * (hw - 4.0*z));
             break;
 
         case e_filter_hp2:
         // 2nd order highpass with freq f, damping z
         // param = {f, z}
-            f = filt->param[0];
-            z = filt->param[1];
+            f = filtParam[0];
+            z = filtParam[1];
             filt->order = 2;
             w = 2.0 * PI * f;
             hw = h * w;
             hw2 = hw * hw;
             a0i = 1.0 / (4.0 + hw * (hw + 4.0*z));
-            filt->b[0] = a0i * 4.0 ;
-            filt->b[1] = a0i * (-8.0);
-            filt->b[2] = a0i * 4.0 ;
+            filtB[0] = a0i * 4.0 ;
+            filtB[1] = a0i * (-8.0);
+            filtB[2] = a0i * 4.0 ;
 
-            filt->a[0] = a0i * (-8.0 + 2.0 * hw2);
-            filt->a[1] = a0i * (4.0 + hw * (hw - 4.0*z));
+            filtA[0] = a0i * (-8.0 + 2.0 * hw2);
+            filtA[1] = a0i * (4.0 + hw * (hw - 4.0*z));
             break;
 
         case e_filter_lp1:
         // 1st order lowpass with cutoff freq f 
         // param = {f}
-            f = filt->param[0];
+            f = filtParam[0];
             filt->order = 1;
             w = 2.0 * PI * f;
             hw = h * w;
             a0i = 1.0 / (2.0 + hw);
-            filt->b[0] = a0i * hw;
-            filt->b[1] = filt->b[0];
+            filtB[0] = a0i * hw;
+            filtB[1] = filtB[0];
 
-            filt->a[0] = a0i * (-2.0 + hw);
+            filtA[0] = a0i * (-2.0 + hw);
             break;
 
         case e_filter_hp1:
         // 1st order highpass with cutoff freq f 
         // param = {f}
-            f = filt->param[0];
+            f = filtParam[0];
             filt->order = 1;
             w = 2.0 * PI * f;
             hw = h * w;
             a0i = 1.0 / (2.0 + hw);
-            filt->b[0] = a0i * 2.0;
-            filt->b[1] = -filt->b[0];
+            filtB[0] = a0i * 2.0;
+            filtB[1] = -filtB[0];
 
-            filt->a[0] = a0i * (-2.0 + hw);
+            filtA[0] = a0i * (-2.0 + hw);
                 break;
 
         case e_filter_n:
         // Notch filter with frequency f, gain g, bandwidth b
         // param =  {f, g, bHz}
-            f = filt->param[0];
-            g = filt->param[1];
-            bHz = filt->param[2];
+            f = filtParam[0];
+            g = filtParam[1];
+            bHz = filtParam[2];
             filt->order = 2;
             w = 2.0 * PI * f;
             b = 2.0 * PI * bHz;
@@ -271,12 +317,12 @@ void filter_x(t_filter* filt)
             
             a0i = 1.0 / (2.0*bh + sqg*(4+hw2));
 
-            filt->b[0] = a0i * sqg * (4.0 + 2.0*b*sqg*h + hw2);
-            filt->b[1] = a0i * 2.0 * sqg *(-4.0 + hw2);
-            filt->b[2] = a0i * sqg * (4.0 - 2.0*b*sqg*h + hw2);
+            filtB[0] = a0i * sqg * (4.0 + 2.0*b*sqg*h + hw2);
+            filtB[1] = a0i * 2.0 * sqg *(-4.0 + hw2);
+            filtB[2] = a0i * sqg * (4.0 - 2.0*b*sqg*h + hw2);
 
-            filt->a[0] = a0i * (2.0*sqg*(-4.0 + hw2));
-            filt->a[1] = a0i * ((-2.0*bh + sqg*(4 + hw2)));
+            filtA[0] = a0i * (2.0*sqg*(-4.0 + hw2));
+            filtA[1] = a0i * ((-2.0*bh + sqg*(4 + hw2)));
             break;
 
         default:
