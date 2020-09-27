@@ -11,6 +11,7 @@ import numpy as np
 import scipy.integrate as integrate
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
+from scipy.io import wavfile
 
 import matplotlib.animation as animation
 
@@ -29,13 +30,16 @@ saveAnimation = True
 
 plt.close('all')
 
-fps = 60
+samplerate, data = wavfile.read('/home/basile/Music/delayfbck/slow_factory.wav')
+
+fps = 32
 rate = 44100
-nPerFrame = 300
+nPerFrame = 5693
 
-x = np.linspace(0,1000,50000);
-y = np.cos(x) * x
+x = data.astype('float')
+x = x[:,0]+x[:,1]
 
+#x = x[10000000:12000000]
 
 class animScope:
     def __init__(self, data, npf, fps, sr):
@@ -79,11 +83,9 @@ class animScope:
         return FuncAnimation(self.fig, self.update, self.frames, init_func=self.initAnim, blit=False, repeat=False, interval=1000/self.fps)
         
 
-scope = animScope(y, nPerFrame, fps, rate)
-aa = scope.anim()
-
-
-writer = animation.FFMpegWriter(fps=fps, metadata=dict(artist='Ugarte'), bitrate=3000)
-
-aa.save('SlowFactory.mp4', writer=writer,dpi=100, savefig_kwargs=dict(facecolor=(0,0,0)))
+if True:
+    scope = animScope(x, nPerFrame, fps, rate)
+    aa = scope.anim()
+    writer = animation.FFMpegWriter(fps=fps, metadata=dict(artist='Ugarte'), bitrate=3000)
+    aa.save('SlowFactory.mp4', writer=writer,dpi=100, savefig_kwargs=dict(facecolor=(0,0,0)))
 

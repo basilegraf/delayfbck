@@ -14,6 +14,8 @@ For now, `delayfbck` includes:
 
 ![](delayfbck-screenshot.png)
 
+Sound sample at [https://youtu.be/t_nbeB5ekew](https://youtu.be/t_nbeB5ekew )
+
 To learn how to write PD externals, check [https://github.com/pure-data/externals-howto](https://github.com/pure-data/externals-howto)
 
 To help you build (compile) externals, check [https://github.com/pure-data/pd-lib-builder](https://github.com/pure-data/pd-lib-builder)
