@@ -44,7 +44,7 @@ class animScope:
         nFrames = int(fps * (len(self.data)-self.npf) / sr)
         self.frames = range(0, nFrames)
         self.fig, self.ax = plt.subplots()
-    def initAnim(self):
+        self.fig.tight_layout()
         self.ax.clear()
         self.ln, = self.ax.plot([], [])
         self.ax.set_aspect(aspect='auto', adjustable='box')
@@ -56,8 +56,12 @@ class animScope:
         self.ax.axis('off')
         self.fig.patch.set_facecolor('xkcd:black')
         self.ax.set_facecolor((0,0,0))
+        
         self.fig.set_size_inches(19.20, 10.80, True)
-        self.fig.tight_layout()
+        self.fig.set_dpi(100)
+    def initAnim(self):
+        print('meuh')
+        
 
     def update(self, frame):
         print(frame)
@@ -77,8 +81,10 @@ aa = scope.anim()
 #if saveAnimation:
 #    aa.save('beforeOptim.gif', writer='imagemagick', fps=25)
 
-Writer = animation.writers['ffmpeg']
-writer = Writer(fps=25, metadata=dict(artist='Ugarte'), bitrate=1000)
+#Writer = animation.writers['ffmpeg']
+#writer = Writer(fps=25, metadata=dict(artist='Ugarte'), bitrate=1000)
 
-aa.save('HeroinOverdosesJumpy.mp4', writer=writer, dpi=200)
+writer = animation.FFMpegWriter(fps=25, codec=None, bitrate=3000 , metadata=None)
+
+aa.save('HeroinOverdosesJumpy.mp4', writer=writer,dpi=100)
 
