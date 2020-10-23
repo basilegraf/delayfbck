@@ -19,8 +19,25 @@ void delay_print(t_delay* del)
 
 
 // Initilize a delay of max length samples long
-void delay_init(t_delay* del, t_int maxLength)
+void delay_init(t_delay* del, t_float sample_time, t_int maxLength)
 {
+    del->sample_time = sample_time;
+    
+    // Variables for delay length ramping
+    del->delay_value = 0.0f;    // Current delay length
+    del->delay_step_size = 0.0f;// Delay ramp incement size 
+    del->delay_n_step = 0;     // Remaining number of steps to apply
+    
+    del->delay_modulation = 0.0f;
+    
+    // Plucked string
+    del->plk_state = e_pluck_idle;
+    del->plk_amplitude = 0.0f;
+    del->plk_rising_step = 0.0f;
+    del->plk_falling_step = 0.0f;
+    del->plk_value = 0.0f;
+    
+    // Delay line
     del->integer = 0;
     del->n = 0;
     del->decimal = 0.0f;
@@ -37,17 +54,15 @@ void delay_init(t_delay* del, t_int maxLength)
         error("delay: memory alloc failed!");
     }
     delay_reset(del);
-    // Plucked string
-    del->plk_state = e_pluck_idle;
-    del->plk_amplitude = 0.0f;
-    del->plk_rising_step = 0.0f;
-    del->plk_falling_step = 0.0f;
-    del->plk_value = 0.0f;
+    
 }
 
 // Free/deallocate delay memory
 void delay_free(t_delay* del)
 {
+    del->delay_value = 0.0;    
+    del->delay_step_size = 0.0;
+    del->delay_n_step = 0; 
     del->integer = 0;
     del->n = 0;
     del->decimal = 0.0f;
@@ -64,22 +79,25 @@ void delay_reset(t_delay* del)
     }
 }
 
-// Set duration dur in seconds, sample time h
-void delay_set_duration(t_delay* del, t_float dur, t_float h)
-{
-    float intpartf;
-    if (dur < 0.f) dur = 0.0f;
-    if (h <= 0.0f) error("delay: sample time must be strictly positive");
-    
-    del->decimal =  modff(dur / h, &intpartf);
-    del->integer = (t_int) intpartf;
 
-    if (del->integer >= del->maxLength)
+// Set the delay line length
+void delay_set_duration(t_delay* del, t_float dur, t_float ramp_time)
+{
+    t_float ramp_amplitude = dur - del->delay_value;
+    if (ramp_time <= 0.0f)
     {
-        del->decimal = 0.0f;
-        del->integer = del->maxLength - 1;
+        del->delay_step_size = ramp_amplitude;
+        del->delay_n_step = 1;
     }
+    else
+    {
+        del->delay_n_step = (t_int) roundf(ramp_time / del->sample_time);
+        del->delay_n_step = del->delay_n_step >= 1 ? del->delay_n_step : 1;
+        del->delay_step_size = ramp_amplitude / ((t_float) del->delay_n_step);
+    }
+    
 }
+
 
 // write at current index
 void delay_write(t_delay* del, t_float x)
@@ -87,7 +105,7 @@ void delay_write(t_delay* del, t_float x)
     del->v[del->n] = x;
 }
 
-// read relative to current index
+// read relative to current index using linear interpolation
 void delay_read(t_delay* del, t_float* y)
 {
     t_int n = del->n;
@@ -101,7 +119,15 @@ void delay_read(t_delay* del, t_float* y)
 
 void delay_step(t_delay* del)
 {
+    // Ramp delay duration
+    if (del->delay_n_step > 0)
+    {
+        del->delay_value += del->delay_step_size;
+        del->delay_n_step--;
+    }
     
+    // Set delay line length with modulation
+    delay_set_delayline_duration_(del, del->delay_value * (1.0f + del->delay_modulation));     
     
     // plucked string   
     switch (del->plk_state)
@@ -160,4 +186,24 @@ void delay_pluck_string(t_delay* del, t_float ampl, t_float pos)
      }
      del->plk_amplitude = ampl;
      del->plk_state = e_pluck_rising;
+}
+
+
+// Private methods
+
+// Set duration dur in seconds
+void delay_set_delayline_duration_(t_delay* del, t_float dur)
+{
+    float intpartf;
+    if (dur < 0.f) dur = 0.0f;
+    if (del->sample_time <= 0.0f) error("delay: sample time must be strictly positive");
+    
+    del->decimal =  modff(dur / del->sample_time, &intpartf);
+    del->integer = (t_int) intpartf;
+
+    if (del->integer >= del->maxLength)
+    {
+        del->decimal = 0.0f;
+        del->integer = del->maxLength - 1;
+    }
 }

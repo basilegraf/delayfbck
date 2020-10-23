@@ -36,12 +36,10 @@ static t_class *delayfbck_tilde_class;
 /**
  * this is the dataspace of our new object
  * the first element is the mandatory "t_object"
- * f_delayfbck denotes the mixing-factor
  * "f" is a dummy and is used to be able to send floats AS signals.
  */
  typedef struct _delayfbck_tilde {
   t_object  x_obj;
-  t_sample f_delayfbck;
   t_sample f;
 
   // Filter types symbols
@@ -75,9 +73,6 @@ static t_class *delayfbck_tilde_class;
   t_float sampleTime; // elsewhere??
 
   t_float delDurationDesired;
-  t_float delDuration;
-  t_float delDurationStep;
-  t_int delDurationNSteps;
 
   t_delay del;
   t_nonlin nl;
@@ -119,8 +114,7 @@ t_int *delayfbck_tilde_perform(t_int *w)
   t_sample  *out2 =   (t_sample *)(w[5]);
   /* all signalblocks are of the same length */
   int          n =           (int)(w[6]);
-  /* get (and clip) the mixing-factor */
-  t_sample f_delayfbck = (x->f_delayfbck<0)?0.0:(x->f_delayfbck>1)?1.0:x->f_delayfbck;
+
   /* just a counter */
   int i;
 
@@ -129,17 +123,11 @@ t_int *delayfbck_tilde_perform(t_int *w)
    */
   t_float yDel;
   for(i=0; i<n; i++)
-    {
-      // Ramp delay duration
-      if (x->delDurationNSteps > 0)
-      {
-          x->delDuration += x->delDurationStep;
-          x->delDurationNSteps--;
-      }
+    {      
       // Modulate delay duration with second input
-      delay_set_duration(&x->del, x->delDuration * (1.0 + in2[i]), x->sampleTime); 
+      (x->del).delay_modulation = in2[i];
 
-      // delay line output
+      // Delay line output
       delay_read(&x->del, &yDel);
 
       // Nonlinearity
@@ -228,14 +216,10 @@ void *delayfbck_tilde_new(t_floatarg f)
 {
   t_delayfbck_tilde *x = (t_delayfbck_tilde *)pd_new(delayfbck_tilde_class);
 
-  /* save the mixing factor in our dataspace */
-  x->f_delayfbck = f;
+  x->f = f; // TODO remove
   
   /* create a new signal-inlet */
   x->x_in2 = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
-
-  /* create a new passive inlet for the mixing-factor */
-  //x->x_in2 = floatinlet_new (&x->x_obj, &x->f_delayfbck);
 
   /* create a new signal-outlet */
   x->x_out1 = outlet_new(&x->x_obj, &s_signal);
@@ -273,12 +257,10 @@ void *delayfbck_tilde_new(t_floatarg f)
   x->picOut = 0.0;
 
   // Init delay line
-  delay_init(&x->del, 44100);
+  delay_init(&x->del, x->sampleTime, 44100);
   x->delDurationDesired = 1.0/100.0;
-  x->delDuration = 1.0/100.0;
-  delay_set_duration(&x->del, 1.0/100.0,  x->sampleTime);
-  x->delDurationStep = 0.0;
-  x->delDurationNSteps = 0;
+  delay_set_duration(&x->del, x->delDurationDesired,  x->sampleTime);
+
 
   // Init the nonlinearity
   nonlin_init(&x->nl);
@@ -522,15 +504,9 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
         
         duration += phase * duration / TWOPI;
     }
-    
-    
-    // Update delay length
-    //post("delayfbck: set delay to %fs", duration);
-    x->delDurationNSteps = (t_int) roundf(delRampTime / x->sampleTime);
-    x->delDurationNSteps = x->delDurationNSteps >= 1 ? x->delDurationNSteps : 1;
-    x->delDurationStep = (duration - x->delDuration) / ((t_float) x->delDurationNSteps);
-    //x->delDuration = duration;
-    //delay_set_duration(&x->del, duration, x->sampleTime); 
+
+    // Update target delay line duration
+    delay_set_duration(&x->del, duration, delRampTime);
 }
 
 
