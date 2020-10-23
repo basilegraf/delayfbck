@@ -473,6 +473,9 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
     // Store the uncompensated desired delay
     x->delDurationDesired = duration;
     
+    // No amplitude corraection by default
+    x->nl_gain_correction = 1.0f;
+    
     post("PitchCorrect = %f, amlpCorrect = %f", pitchCorrect, amplCorrect);
     
     // If desired, take phase of filters and nonlin gain at frequency 1/duration into account 
@@ -481,7 +484,6 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
         // Compute phase of all filters
         t_float mag = 1.0;
         t_float phase =0.0;
-        t_float gain;
         t_float fNorm = x->sampleTime / duration;
         t_float magk, phasek;
         for (t_int k=0; k<MAX_NUM_FILTERS; k++)
@@ -510,11 +512,12 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
         if ((amplCorrect > 0.5f) && (mag != 0.0f))
         {
             x->nl_gain_correction = fminf(1.0f / mag, 10.0f);
-            gain = x->nl_gain_base_value * x->nl_gain_correction;
-            nonlin_set(&x->nl, x->nl.type, gain, x->nl.saturation, delRampTime);
         }
     }
 
+    // Update target gain
+    t_float gain = x->nl_gain_base_value * x->nl_gain_correction;
+    nonlin_set(&x->nl, x->nl.type, gain, x->nl.saturation, delRampTime);
     // Update target delay line duration
     delay_set_duration(&x->del, duration, delRampTime);
 }
