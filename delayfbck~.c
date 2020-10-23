@@ -76,9 +76,8 @@ static t_class *delayfbck_tilde_class;
 
   t_delay del;
   t_nonlin nl;
-  t_float nl_gainBase_value;
-  t_float nl_gainBase_step_size;
-  t_int nl_gainBase_n_step;
+  t_float nl_gain_base_value;
+  t_float nl_gain_correction;
 
   t_inlet *x_in2;
   t_outlet* x_out1;
@@ -132,22 +131,8 @@ t_int *delayfbck_tilde_perform(t_int *w)
       // Delay line output
       delay_read(&x->del, &yDel);
 
-      // Nonlinearity
-      // Ramp gain base value
-      if (x->nl_gainBase_n_step > 0)
-      {
-          x->nl_gainBase_value += x->nl_gainBase_step_size; // should it be multiplicative ?
-          x->nl_gainBase_n_step--;
-      }
-      // Apply PI controller and set gain value
-      if (x->nl_gainBase_value > 0.0)
-      {
-          x->nl.gain = fmaxf(x->nl_gainBase_value + x->picOut, 0.0); // Update gain with controller output
-      }
-      else
-      {
-          x->nl.gain = fminf(x->nl_gainBase_value + x->picOut, 0.0); // Update gain with controller output
-      }
+      // Apply PI controller to gain modulation
+      x->nl.gain_modulation = x->picOut;
       nonlin_step(&x->nl, in1[i] + yDel, &out1[i]);
 
       //Filter
@@ -272,11 +257,10 @@ void *delayfbck_tilde_new(t_floatarg f)
 
 
   // Init the nonlinearity
-  nonlin_init(&x->nl);
-  x->nl_gainBase_value = 1.0;
-  x->nl_gainBase_step_size = 0.0;
-  x->nl_gainBase_n_step = 0;
-  nonlin_set(&x->nl, e_symmetric_sat, x->nl_gainBase_value, 1.0);
+  nonlin_init(&x->nl, x->sampleTime);
+  x->nl_gain_base_value = 0.0;
+  x->nl_gain_correction = 1.0;
+  nonlin_set(&x->nl, e_symmetric_sat, x->nl_gain_base_value, 1.0f, 0.0f);
   nonlin_print(&x->nl);
   return (void *)x;
 }
@@ -336,7 +320,7 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
       filtargs[k] = atom_getfloatarg(k + 2, argc, argv);
   }
 
-  if (filtNum < 0 || filtNum >= MAX_NUM_FILTERS)
+  if ((filtNum < 0) || (filtNum >= MAX_NUM_FILTERS))
   {
     error("delayfbck filter: Filter number out of range 0...%d.", MAX_NUM_FILTERS-1);
   }
@@ -445,7 +429,7 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   post("delayfbck: nonlin with %d arguments", argc);
   for (int k=0; k<argc; k++)
 
-  if (argc != 3 && argc != 4)
+  if ((argc != 3) && (argc != 4))
   {
     error("delayfbck nonlin: 3 or 4 arguments expected");
     return;
@@ -470,25 +454,14 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   t_float gain = atom_getfloatarg(1, argc, argv);
   t_float sat  = atom_getfloatarg(2, argc, argv);
   t_float ramp_time  = atom_getfloatarg(3, argc, argv);
-
-
-  t_float ramp_amplitude = gain - x->nl_gainBase_value;
-  if (ramp_time <= 0.0f)
-  {
-    x->nl_gainBase_step_size = ramp_amplitude;
-    x->nl_gainBase_n_step = 1;
-  }
-  else
-  {
-    x->nl_gainBase_n_step = (t_int) roundf(ramp_time / x->sampleTime);
-    x->nl_gainBase_n_step = x->nl_gainBase_n_step >= 1 ? x->nl_gainBase_n_step : 1;
-    x->nl_gainBase_step_size = ramp_amplitude / ((t_float) x->nl_gainBase_n_step);
-  }
   
-  if      (nonlinType == x->sym_symmetric_sat)      {if (nonlin_set(&x->nl, e_symmetric_sat,      gain, sat)) return;}
-  else if (nonlinType == x->sym_asymmetric_sat)     {if (nonlin_set(&x->nl, e_asymmetric_sat,     gain, sat)) return;}
-  else if (nonlinType == x->sym_symmetric_sigmoid)  {if (nonlin_set(&x->nl, e_symmetric_sigmoid,  gain, sat)) return;}
-  else if (nonlinType == x->sym_asymmetric_sigmoid) {if (nonlin_set(&x->nl, e_asymmetric_sigmoid, gain, sat)) return;}
+  x->nl_gain_base_value = gain;
+  gain *= x->nl_gain_correction;
+  
+  if      (nonlinType == x->sym_symmetric_sat)      {nonlin_set(&x->nl, e_symmetric_sat,      gain, sat, ramp_time);}
+  else if (nonlinType == x->sym_asymmetric_sat)     {nonlin_set(&x->nl, e_asymmetric_sat,     gain, sat, ramp_time);}
+  else if (nonlinType == x->sym_symmetric_sigmoid)  {nonlin_set(&x->nl, e_symmetric_sigmoid,  gain, sat, ramp_time);}
+  else if (nonlinType == x->sym_asymmetric_sigmoid) {nonlin_set(&x->nl, e_asymmetric_sigmoid, gain, sat, ramp_time);}
   else {error("Unknown nonlin type");}
  
   nonlin_print(&x->nl);
@@ -500,12 +473,15 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
     // Store the uncompensated desired delay
     x->delDurationDesired = duration;
     
+    post("PitchCorrect = %f, amlpCorrect = %f", pitchCorrect, amplCorrect);
+    
     // If desired, take phase of filters and nonlin gain at frequency 1/duration into account 
-    if (pitchCorrect > 0.0 || amplCorrect > 0.0)
+    if ((pitchCorrect > 0.5f) || (amplCorrect > 0.5f))
     {
         // Compute phase of all filters
         t_float mag = 1.0;
         t_float phase =0.0;
+        t_float gain;
         t_float fNorm = x->sampleTime / duration;
         t_float magk, phasek;
         for (t_int k=0; k<MAX_NUM_FILTERS; k++)
@@ -526,9 +502,16 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
         } 
         post("Filters phase = %g, mag=%g", 180.0 * phase / PI, mag);
         
-        if (pitchCorrect > 0.0) 
+        if (pitchCorrect > 0.5f) 
         {
             duration += phase * duration / TWOPI;
+        }
+        
+        if ((amplCorrect > 0.5f) && (mag != 0.0f))
+        {
+            x->nl_gain_correction = fminf(1.0f / mag, 10.0f);
+            gain = x->nl_gain_base_value * x->nl_gain_correction;
+            nonlin_set(&x->nl, x->nl.type, gain, x->nl.saturation, delRampTime);
         }
     }
 
