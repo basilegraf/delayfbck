@@ -76,7 +76,9 @@ static t_class *delayfbck_tilde_class;
 
   t_delay del;
   t_nonlin nl;
-  t_float nl_gainBase;
+  t_float nl_gainBase_value;
+  t_float nl_gainBase_step_size;
+  t_int nl_gainBase_n_step;
 
   t_inlet *x_in2;
   t_outlet* x_out1;
@@ -84,7 +86,7 @@ static t_class *delayfbck_tilde_class;
 } t_delayfbck_tilde;
 
 // Function declarations
-void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect);
+void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect, t_floatarg amplCorrect);
 
 
 /**
@@ -131,13 +133,20 @@ t_int *delayfbck_tilde_perform(t_int *w)
       delay_read(&x->del, &yDel);
 
       // Nonlinearity
-      if (x->nl_gainBase > 0.0)
+      // Ramp gain base value
+      if (x->nl_gainBase_n_step > 0)
       {
-          x->nl.gain = fmaxf(x->nl_gainBase + x->picOut, 0.0); // Update gain with controller output
+          x->nl_gainBase_value += x->nl_gainBase_step_size; // should it be multiplicative ?
+          x->nl_gainBase_n_step--;
+      }
+      // Apply PI controller and set gain value
+      if (x->nl_gainBase_value > 0.0)
+      {
+          x->nl.gain = fmaxf(x->nl_gainBase_value + x->picOut, 0.0); // Update gain with controller output
       }
       else
       {
-          x->nl.gain = fminf(x->nl_gainBase + x->picOut, 0.0); // Update gain with controller output
+          x->nl.gain = fminf(x->nl_gainBase_value + x->picOut, 0.0); // Update gain with controller output
       }
       nonlin_step(&x->nl, in1[i] + yDel, &out1[i]);
 
@@ -264,8 +273,10 @@ void *delayfbck_tilde_new(t_floatarg f)
 
   // Init the nonlinearity
   nonlin_init(&x->nl);
-  x->nl_gainBase = 1.0;
-  nonlin_set(&x->nl, e_symmetric_sat, x->nl_gainBase, 1.0);
+  x->nl_gainBase_value = 1.0;
+  x->nl_gainBase_step_size = 0.0;
+  x->nl_gainBase_n_step = 0;
+  nonlin_set(&x->nl, e_symmetric_sat, x->nl_gainBase_value, 1.0);
   nonlin_print(&x->nl);
   return (void *)x;
 }
@@ -423,7 +434,8 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   
   // Set the delay duration to the desired one ==> apply duration correction based on new filters
   t_floatarg pitchCorrect = 1;
-  set_delay(x, x->delDurationDesired, filtRampTime, pitchCorrect);
+  t_floatarg amplCorrect = 1;
+  set_delay(x, x->delDurationDesired, filtRampTime, pitchCorrect, amplCorrect);
 }
 
 
@@ -433,9 +445,9 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   post("delayfbck: nonlin with %d arguments", argc);
   for (int k=0; k<argc; k++)
 
-  if (argc != 3)
+  if (argc != 3 && argc != 4)
   {
-    error("delayfbck nonlin: 3 arguments expected");
+    error("delayfbck nonlin: 3 or 4 arguments expected");
     return;
   }
   else if (argv[0].a_type != A_SYMBOL)
@@ -448,12 +460,31 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
     error("delayfbck nonlin: Arguments 2 and 3 should be floats");
     return;
   }
+  if (argc == 4 && argv[3].a_type != A_FLOAT)
+  {
+    error("delayfbck nonlin: Arguments 4 should be a float");
+    return;
+  }
 
   t_symbol* nonlinType = atom_getsymbolarg(0, argc, argv);
   t_float gain = atom_getfloatarg(1, argc, argv);
   t_float sat  = atom_getfloatarg(2, argc, argv);
+  t_float ramp_time  = atom_getfloatarg(3, argc, argv);
 
-  x->nl_gainBase = gain;
+
+  t_float ramp_amplitude = gain - x->nl_gainBase_value;
+  if (ramp_time <= 0.0f)
+  {
+    x->nl_gainBase_step_size = ramp_amplitude;
+    x->nl_gainBase_n_step = 1;
+  }
+  else
+  {
+    x->nl_gainBase_n_step = (t_int) roundf(ramp_time / x->sampleTime);
+    x->nl_gainBase_n_step = x->nl_gainBase_n_step >= 1 ? x->nl_gainBase_n_step : 1;
+    x->nl_gainBase_step_size = ramp_amplitude / ((t_float) x->nl_gainBase_n_step);
+  }
+  
   if      (nonlinType == x->sym_symmetric_sat)      {if (nonlin_set(&x->nl, e_symmetric_sat,      gain, sat)) return;}
   else if (nonlinType == x->sym_asymmetric_sat)     {if (nonlin_set(&x->nl, e_asymmetric_sat,     gain, sat)) return;}
   else if (nonlinType == x->sym_symmetric_sigmoid)  {if (nonlin_set(&x->nl, e_symmetric_sigmoid,  gain, sat)) return;}
@@ -464,13 +495,13 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 }
 
 
-void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect)
+void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect, t_floatarg amplCorrect)
 {
     // Store the uncompensated desired delay
     x->delDurationDesired = duration;
     
     // If desired, take phase of filters and nonlin gain at frequency 1/duration into account 
-    if (pitchCorrect > 0.0)
+    if (pitchCorrect > 0.0 || amplCorrect > 0.0)
     {
         // Compute phase of all filters
         t_float mag = 1.0;
@@ -482,16 +513,9 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
             filter_bode(&x->filters[k],  fNorm, e_set_filter_coeffs_target, &magk, &phasek); // Use phase of target filter (after any currently ongoing filter ramp)
             mag *= magk;
             phase += phasek;
-            
-            /*post("Filter[%d] phasek = %g, magk=%g \n   a = [%g, %g], \n   b = [%g, %g, %g] \n   a_target = [%g, %g], \n   b_target = [%g, %g, %g]", k, 180.0 * phasek / PI, magk,  
-            x->filters[k].a[0], x->filters[k].a[1],
-            x->filters[k].b[0], x->filters[k].b[1], x->filters[k].b[2],
-            x->filters[k].a_target[0], x->filters[k].a_target[1],
-            x->filters[k].b_target[0], x->filters[k].b_target[1], x->filters[k].b_target[2]);*/
         }
         post("-");
-        // Add mag and phase of non-linearity
-        mag *= fabs(x->nl.gain);
+        // Add phase of non-linearity
         if (x->nl.gain < 0.0)
         {
             phase += PI;
@@ -502,7 +526,10 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
         } 
         post("Filters phase = %g, mag=%g", 180.0 * phase / PI, mag);
         
-        duration += phase * duration / TWOPI;
+        if (pitchCorrect > 0.0) 
+        {
+            duration += phase * duration / TWOPI;
+        }
     }
 
     // Update target delay line duration
@@ -549,7 +576,7 @@ void delayfbck_tilde_setup(void) {
 
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_delay, gensym("delay"),
-        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, 0);
+        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, 0);
         
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_amplitude_control, gensym("ampctrl"),

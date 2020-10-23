@@ -75,7 +75,7 @@ void filter_n(t_filter* filt, t_float f, t_float g, t_float b, t_float h);
 
 void filter_x(t_filter* filt, enum e_set_filter e_set_to);
 
-// Bode of a filter filt transfer function, evaluated at normalized frequency f = freq/fsampling in [0, 1]
+// Bode transfer function of filter filt evaluated at normalized frequency f = freq/fsampling in [0, 1]
 // e_set: choose between current filter coeffs and and target filter coeffs (after ramp)
 void filter_bode(t_filter* filt,  t_float f, enum e_set_filter e_set, t_float* mag, t_float* phase);
 
