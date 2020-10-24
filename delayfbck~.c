@@ -23,6 +23,7 @@
 #include "delay.h"
 #include "nonlin.h"
 #include "picont.h"
+#include "cubic.h"
 
 #define MAX_NUM_FILTERS 5
 
@@ -210,6 +211,8 @@ void delayfbck_tilde_free(t_delayfbck_tilde *x)
  */
 void *delayfbck_tilde_new(t_floatarg f)
 {
+    t_float xe, ye;
+    t_float y[4];
   t_delayfbck_tilde *x = (t_delayfbck_tilde *)pd_new(delayfbck_tilde_class);
 
   x->f = f; // TODO remove
@@ -267,6 +270,14 @@ void *delayfbck_tilde_new(t_floatarg f)
   x->nl_gain_correction = 1.0;
   nonlin_set(&x->nl, e_symmetric_sat, x->nl_gain_base_value, 1.0f, 0.0f);
   nonlin_print(&x->nl);
+  
+  //////////////////
+  y[0] = 0.1; y[1] = 1.3; y[2] = -1.2; y[3] = 0.3; 
+  xe = 0.43;
+  ye = cubic(y, xe);
+  post("Cubic : %f", ye);
+  //////////////////
+  
   return (void *)x;
 }
 
