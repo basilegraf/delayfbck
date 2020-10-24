@@ -8,8 +8,6 @@ basile dot graf at a3 dot epfl dot ch
 #include <stdlib.h>  
 #include <math.h>
 
-int dummy = 0;
-
 
 // Initialize 
 void nonlin_init(t_nonlin* nl, t_float sample_time)
@@ -109,12 +107,6 @@ void nonlin_step(t_nonlin* nl, t_float x, t_float* y)
         break;
     }
     
-    if (dummy == 0)
-    {
-        post("gain = %f", nl->gain);
-    }
-    dummy++;
-    if (dummy > 10000) dummy = 0;
 }
 
 
