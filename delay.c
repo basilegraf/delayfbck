@@ -1,9 +1,10 @@
 /* 
-Variable delay line with linearly interpolated tap.
+Variable delay line with linear/cubic interpolation tap.
 basile dot graf at a3 dot epfl dot ch
 */
 
 #include "delay.h"
+#include "cubic.h"
 #include <stdio.h>      
 #include <stdlib.h>  
 #include <math.h>
@@ -22,6 +23,8 @@ void delay_print(t_delay* del)
 void delay_init(t_delay* del, t_float sample_time, t_int maxLength)
 {
     del->sample_time = sample_time;
+    
+    del->interp_type = e_interp_linear;
     
     // Variables for delay length ramping
     del->delay_value = 0.0f;    // Current delay length
@@ -105,15 +108,27 @@ void delay_write(t_delay* del, t_float x)
     del->v[del->n] = x;
 }
 
-// read relative to current index using linear interpolation
+// read relative to current index using linear or cubic interpolation
 void delay_read(t_delay* del, t_float* y)
 {
     t_int n = del->n;
     t_int vLen = del->maxLength;
     t_float tapn, tapn1;
-    tapn  = del->v[(vLen + n - del->integer) % vLen];
-    tapn1 = del->v[(vLen + n - del->integer - 1) % vLen];
-    *y = (1.0f - del->decimal) * tapn + del->decimal * tapn1;
+    t_float y_data[4];
+    if (del->interp_type == e_interp_linear)
+    {
+        tapn  = del->v[(vLen + n - del->integer) % vLen];
+        tapn1 = del->v[(vLen + n - del->integer - 1) % vLen];
+        *y = (1.0f - del->decimal) * tapn + del->decimal * tapn1;
+    }
+    else // del->interp_type == e_interp_cubic
+    {
+        y_data[0] = del->v[(vLen + n - del->integer + 1) % vLen];
+        y_data[1] = del->v[(vLen + n - del->integer)     % vLen];
+        y_data[2] = del->v[(vLen + n - del->integer - 1) % vLen];
+        y_data[3] = del->v[(vLen + n - del->integer - 2) % vLen];
+        *y = cubic(y_data, del->decimal);
+    }
 }
 
 

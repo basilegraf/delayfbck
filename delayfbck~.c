@@ -211,8 +211,6 @@ void delayfbck_tilde_free(t_delayfbck_tilde *x)
  */
 void *delayfbck_tilde_new(t_floatarg f)
 {
-    t_float xe, ye;
-    t_float y[4];
   t_delayfbck_tilde *x = (t_delayfbck_tilde *)pd_new(delayfbck_tilde_class);
 
   x->f = f; // TODO remove
@@ -270,13 +268,6 @@ void *delayfbck_tilde_new(t_floatarg f)
   x->nl_gain_correction = 1.0;
   nonlin_set(&x->nl, e_symmetric_sat, x->nl_gain_base_value, 1.0f, 0.0f);
   nonlin_print(&x->nl);
-  
-  //////////////////
-  y[0] = 0.1; y[1] = 1.3; y[2] = -1.2; y[3] = 0.3; 
-  xe = 0.43;
-  ye = cubic(y, xe);
-  post("Cubic : %f", ye);
-  //////////////////
   
   return (void *)x;
 }
@@ -571,6 +562,18 @@ void set_gain_correction(t_delayfbck_tilde* x, t_floatarg gain_correct)
     post("Use gain correction: %f", (t_float) gain_correct);
 }
 
+void set_linear_interp(t_delayfbck_tilde* x)
+{
+    x->del.interp_type = e_interp_linear;
+    post("Use linear interpolation");
+}
+
+void set_cubic_interp(t_delayfbck_tilde* x)
+{
+    x->del.interp_type = e_interp_cubic;
+    post("Use cubic interpolation");
+}
+
 
 /**
  * define the function-space of the class
@@ -614,6 +617,13 @@ void delayfbck_tilde_setup(void) {
         (t_method)set_gain_correction, gensym("gaincorr"),
         A_DEFFLOAT, 0);
         
+  class_addmethod(delayfbck_tilde_class,
+        (t_method)set_linear_interp, gensym("linear"),
+        0);
+        
+  class_addmethod(delayfbck_tilde_class,
+        (t_method)set_cubic_interp, gensym("cubic"),
+        0);  
         
 
 

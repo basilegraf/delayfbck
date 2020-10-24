@@ -1,5 +1,5 @@
 /* 
-Variable delay line with linearly interpolated tap.
+Variable delay line with linear/cubic interpolation tap.
 basile dot graf at a3 dot epfl dot ch
 */
 
@@ -16,9 +16,16 @@ enum e_pluck_state {
     e_pluck_falling
 };
 
+enum e_interp_type {
+    e_interp_linear,
+    e_interp_cubic
+};
+
 typedef struct _delay {
     
     t_float sample_time;
+    
+    enum e_interp_type interp_type;
     
     // Variables for delay length ramping
     t_float delay_value;    // Current delay length
