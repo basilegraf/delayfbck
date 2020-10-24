@@ -30,7 +30,7 @@ basile dot graf at a3 dot epfl dot ch
  * 
  */
 
-
+/*
 t_float cubic(t_float* y_data, t_float x_eval)
 {
     t_float x_eval2 = x_eval * x_eval;
@@ -41,6 +41,14 @@ t_float cubic(t_float* y_data, t_float x_eval)
     y_eval += (                     x_eval + (1.0/2.0) * x_eval2 + (-1.0/2.0) * x_eval3) * y_data[2];
     y_eval += (        (-1.0/6.0) * x_eval                       + (1.0/6.0)  * x_eval3) * y_data[3];
     return y_eval;
+}
+ * */
+
+// Condensed form with 3 multiplications less...
+t_float cubic(t_float* y_data, t_float x_eval)
+{
+    t_float x_eval2 = x_eval * x_eval;
+    return (1.0/6.0) * (-((x_eval - 2.0) * ((x_eval - 1.0)* x_eval * y_data[0] - 3.0 * (x_eval2 - 1.0) * y_data[1] + 3.0 * x_eval * (x_eval + 1.0) * y_data[2])) + x_eval * (x_eval2 - 1.0) * y_data[3]);
 }
 
 
