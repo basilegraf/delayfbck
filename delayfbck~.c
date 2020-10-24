@@ -61,6 +61,8 @@ static t_class *delayfbck_tilde_class;
 
   // Filter array
   t_filter filters[MAX_NUM_FILTERS];
+  t_int use_pitch_correction;
+  t_int use_gain_correction;
   
   // Envelope detection filter
   t_filter envelopeFilt;
@@ -85,7 +87,7 @@ static t_class *delayfbck_tilde_class;
 } t_delayfbck_tilde;
 
 // Function declarations
-void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect, t_floatarg amplCorrect);
+void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime);
 
 
 /**
@@ -244,6 +246,9 @@ void *delayfbck_tilde_new(t_floatarg f)
   
   // Init envelope filter
   filter_lp1(&x->envelopeFilt, 10.0, x->sampleTime);
+  
+  x->use_pitch_correction = 1;
+  x->use_gain_correction = 0;
   
   // Init PI amplitude controller with zero gains and saturation 1.0
   picont_init(&x->pic, 0.0, 0.0, 1.0);
@@ -417,16 +422,14 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   x->filters[filtNum].n_param_steps = n_param_steps;
   
   // Set the delay duration to the desired one ==> apply duration correction based on new filters
-  t_floatarg pitchCorrect = 1;
-  t_floatarg amplCorrect = 1;
-  set_delay(x, x->delDurationDesired, filtRampTime, pitchCorrect, amplCorrect);
+  set_delay(x, x->delDurationDesired, filtRampTime);
 }
 
 
 
 void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 {
-  post("delayfbck: nonlin with %d arguments", argc);
+  post("delayfbck: nonlin with %f arguments", (t_float) argc);
   for (int k=0; k<argc; k++)
 
   if ((argc != 3) && (argc != 4))
@@ -468,7 +471,7 @@ void set_nonlinearity(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
 }
 
 
-void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime, t_floatarg pitchCorrect, t_floatarg amplCorrect)
+void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime)
 {
     // Store the uncompensated desired delay
     x->delDurationDesired = duration;
@@ -476,10 +479,10 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
     // No amplitude corraection by default
     x->nl_gain_correction = 1.0f;
     
-    post("PitchCorrect = %f, amlpCorrect = %f", pitchCorrect, amplCorrect);
+    post("PitchCorrect = %f, amlpCorrect = %f", (t_float) x->use_pitch_correction, (t_float) x->use_gain_correction);
     
     // If desired, take phase of filters and nonlin gain at frequency 1/duration into account 
-    if ((pitchCorrect > 0.5f) || (amplCorrect > 0.5f))
+    if ((x->use_pitch_correction > 0) || (x->use_gain_correction > 0))
     {
         // Compute phase of all filters
         t_float mag = 1.0;
@@ -504,12 +507,12 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
         } 
         post("Filters phase = %g, mag=%g", 180.0 * phase / PI, mag);
         
-        if (pitchCorrect > 0.5f) 
+        if (x->use_pitch_correction > 0) 
         {
             duration += phase * duration / TWOPI;
         }
         
-        if ((amplCorrect > 0.5f) && (mag != 0.0f))
+        if ((x->use_gain_correction > 0) && (mag != 0.0f))
         {
             x->nl_gain_correction = fminf(1.0f / mag, 10.0f);
         }
@@ -539,6 +542,25 @@ void set_pluck_string(t_delayfbck_tilde* x, t_floatarg ampl, t_floatarg pos)
 }
 
 
+void set_pitch_correction(t_delayfbck_tilde* x, t_floatarg pitch_correct)
+{
+    t_float ramp_time = 0.01f; // Should be fine
+    x->use_pitch_correction = pitch_correct > 0.5f ? 1 : 0;
+    // Set the delay duration to the desired one ==> apply correction based on new choice
+    set_delay(x, x->delDurationDesired, ramp_time);
+    post("Use pitch correction: %f", (t_float) pitch_correct);
+}
+
+void set_gain_correction(t_delayfbck_tilde* x, t_floatarg gain_correct)
+{
+    t_float ramp_time = 0.01f; // Should be fine
+    x->use_gain_correction = gain_correct > 0.5f ? 1 : 0;
+    // Set the delay duration to the desired one ==> apply correction based on new choice
+    set_delay(x, x->delDurationDesired, ramp_time);
+    post("Use gain correction: %f", (t_float) gain_correct);
+}
+
+
 /**
  * define the function-space of the class
  * within a single-object external the name of this function is very special
@@ -562,7 +584,7 @@ void delayfbck_tilde_setup(void) {
 
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_delay, gensym("delay"),
-        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, 0);
+        A_DEFFLOAT, A_DEFFLOAT, 0);
         
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_amplitude_control, gensym("ampctrl"),
@@ -572,6 +594,14 @@ void delayfbck_tilde_setup(void) {
   class_addmethod(delayfbck_tilde_class,
         (t_method)set_pluck_string, gensym("pluck"),
         A_DEFFLOAT, A_DEFFLOAT, 0);
+        
+  class_addmethod(delayfbck_tilde_class,
+        (t_method)set_pitch_correction, gensym("pitchcorr"),
+        A_DEFFLOAT, 0);
+        
+  class_addmethod(delayfbck_tilde_class,
+        (t_method)set_gain_correction, gensym("gaincorr"),
+        A_DEFFLOAT, 0);
         
         
 
