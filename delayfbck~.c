@@ -64,6 +64,7 @@ static t_class *delayfbck_tilde_class;
   t_filter filters[MAX_NUM_FILTERS];
   t_int use_pitch_correction;
   t_int use_gain_correction;
+  t_int num_filters_in_loop; // filters 0...num_filters_in_loop-1 are in the feedback loop, filters num_filters_in_loop...MAX_NUM_FILTERS-1 are on the output
   
   // Envelope detection filter
   t_filter envelopeFilt;
@@ -125,7 +126,7 @@ t_int *delayfbck_tilde_perform(t_int *w)
   /* this is the main routine: 
    * mix the 2 input signals into the output signal
    */
-  t_float yDel;
+  t_float yDel, fdbk_i;
   for(i=0; i<n; i++)
     {      
       // Modulate delay duration with second input
@@ -138,18 +139,26 @@ t_int *delayfbck_tilde_perform(t_int *w)
       x->nl.gain_modulation = x->picOut;
       nonlin_step(&x->nl, in1[i] + yDel, &out1[i]);
 
-      //Filter
-      for (int k=0; k<MAX_NUM_FILTERS; k++)
+      //Filters in the feedback loop
+      for (int k=0; k < x->num_filters_in_loop; k++)
+      {
+        filter_step(&x->filters[k], out1[i], &out1[i]);
+      }
+      
+      fdbk_i = out1[i]; // This is filter[num_filters_in_loop-1] output value, we keep it for feeding the delay line
+      
+      // Remaining filters on the output
+      for (int k=x->num_filters_in_loop; k<MAX_NUM_FILTERS; k++)
       {
         filter_step(&x->filters[k], out1[i], &out1[i]);
       }
 
       // Delay line feedback     
-      delay_write(&x->del, out1[i]);
+      delay_write(&x->del, fdbk_i);
       delay_step(&x->del);    
       
       // second output: Envelope filter
-      out2[i] = fabsf(out1[i]);
+      out2[i] = fabsf(fdbk_i);
       filter_step(&x->envelopeFilt, out2[i], &out2[i]);
       
       // PI amplitude controller
@@ -250,6 +259,7 @@ void *delayfbck_tilde_new(t_floatarg f)
   
   x->use_pitch_correction = 1;
   x->use_gain_correction = 0;
+  x->num_filters_in_loop = MAX_NUM_FILTERS;
   
   // Init PI amplitude controller with zero gains and saturation 1.0
   picont_init(&x->pic, 0.0, 0.0, 1.0);
@@ -486,12 +496,12 @@ void set_delay(t_delayfbck_tilde* x, t_floatarg duration, t_floatarg delRampTime
     // If desired, take phase of filters and nonlin gain at frequency 1/duration into account 
     if ((x->use_pitch_correction > 0) || (x->use_gain_correction > 0))
     {
-        // Compute phase of all filters
+        // Compute phase of all filters in the feedback loop (filter on output have no influence on pitch and loop gain)
         t_float mag = 1.0;
         t_float phase =0.0;
         t_float fNorm = x->sampleTime / duration;
         t_float magk, phasek;
-        for (t_int k=0; k<MAX_NUM_FILTERS; k++)
+        for (t_int k=0; k < x->num_filters_in_loop; k++)
         {
             filter_bode(&x->filters[k],  fNorm, e_set_filter_coeffs_target, &magk, &phasek); // Use phase of target filter (after any currently ongoing filter ramp)
             mag *= magk;
@@ -574,6 +584,14 @@ void set_cubic_interp(t_delayfbck_tilde* x)
     post("Use cubic interpolation");
 }
 
+void set_num_filters_in_loop(t_delayfbck_tilde* x, t_floatarg num_in_loop_f)
+{
+    t_int num_in_loop = (t_int) num_in_loop_f;
+    num_in_loop = num_in_loop < 0 ? 0 : num_in_loop;
+    num_in_loop = num_in_loop > MAX_NUM_FILTERS ? MAX_NUM_FILTERS : num_in_loop;
+    x->num_filters_in_loop = num_in_loop;
+    post("Use filters 0...%f in the loop and filters %f...%f on output.", (t_float) (num_in_loop - 1), (t_float) num_in_loop, (t_float) (MAX_NUM_FILTERS - 1));
+}
 
 /**
  * define the function-space of the class
@@ -625,7 +643,9 @@ void delayfbck_tilde_setup(void) {
         (t_method)set_cubic_interp, gensym("cubic"),
         0);  
         
-
+  class_addmethod(delayfbck_tilde_class,
+        (t_method)set_num_filters_in_loop, gensym("nfiltloop"),
+        A_DEFFLOAT, 0);
 
   /* whenever the audio-engine is turned on, the "delayfbck_tilde_dsp()" 
    * function will get called
