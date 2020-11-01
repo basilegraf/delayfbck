@@ -371,7 +371,7 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   {
     //post("delayfbck: lp2");
     x->filters[filtNum].type = e_filter_lp2;
-    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
+    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // frequency
     x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // damping zeta
     filtRampTime = filtargs[2];
   }
@@ -379,7 +379,7 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   {
     //post("delayfbck: hp2");
     x->filters[filtNum].type = e_filter_hp2;
-    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
+    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // frequency
     x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // damping zeta
     filtRampTime = filtargs[2];
   }
@@ -387,7 +387,7 @@ void set_filter(t_delayfbck_tilde* x, t_symbol *s, int argc, t_atom *argv)
   {
     //post("delayfbck: n");
     x->filters[filtNum].type = e_filter_n;
-    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // freqency
+    x->filters[filtNum].param_ramptype[0] = e_ramp_exp; // frequency
     x->filters[filtNum].param_ramptype[1] = e_ramp_lin; // gain
     x->filters[filtNum].param_ramptype[2] = e_ramp_lin; // bandwidth
     filtRampTime = filtargs[3];

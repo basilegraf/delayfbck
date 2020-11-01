@@ -70,7 +70,7 @@ void filter_step(t_filter* filt, t_float x, t_float* y)
     {
         for (t_int k = 0; k < MAX_FILTER_NUM_PARAM; k++)
         {
-            if (filt->param_ramptype == e_ramp_lin)
+            if (filt->param_ramptype[k] == e_ramp_lin)
             {
                 filt->param[k] += filt->param_step[k];
             }
@@ -314,7 +314,7 @@ void filter_x(t_filter* filt, enum e_set_filter e_set_to)
 
             filtA[0] = a0i * (2.0*sqg*(-4.0 + hw2));
             filtA[1] = a0i * ((-2.0*bh + sqg*(4 + hw2)));
-            post("Notch {%f %f %f} [%f %f %f] [1 %f %f]", f,g,bHz, filtB[0], filtB[1], filtB[2], filtA[0], filtA[1]);
+            //post("Notch {%f %f %f} [%f %f %f] [1 %f %f]", f,g,bHz, filtB[0], filtB[1], filtB[2], filtA[0], filtA[1]);
             break;
 
         default:
